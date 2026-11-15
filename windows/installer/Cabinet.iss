@@ -37,6 +37,11 @@ const
   CabinetUninstallKey =
     'Software\Microsoft\Windows\CurrentVersion\Uninstall\{B1A2E3A4-70D7-47BC-8E9A-26B9C1D25A5C}_is1';
 
+function NormalizeInstallDirectory(const Directory: String): String;
+begin
+  Result := RemoveBackslashUnlessRoot(ExpandFileName(Directory));
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   PreviousDirectory: String;
@@ -51,8 +56,10 @@ begin
        'InstallLocation',
        PreviousDirectory) then
   begin
-    PreviousDirectory := ExpandFileName(PreviousDirectory);
-    if CompareText(PreviousDirectory, ExpandFileName(WizardDirValue)) <> 0 then
+    PreviousDirectory := NormalizeInstallDirectory(PreviousDirectory);
+    if CompareText(
+         PreviousDirectory,
+         NormalizeInstallDirectory(WizardDirValue)) <> 0 then
     begin
       Result :=
         'La mise à jour doit utiliser le dossier de l’installation existante : ' +
