@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{% if is_edit %}Modifier une suggestion{% else %}Nouvelle suggestion{% endif %}{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">OUTILS MÉDICAUX</p><h1>{% if is_edit %}Modifier une suggestion{% else %}Nouvelle suggestion{% endif %}</h1><p class="muted">Les suggestions personnelles sont visibles par vous et complètent la bibliothèque commune.</p></div>
+  <a class="button secondary" href="{% url 'consultations:suggestions' %}">Retour aux suggestions</a>
+</header>
+<form method="post" class="panel patient-form">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="form-grid">
+    {% for field in form %}
+    <div class="field {% if field.name == 'text' %}wide{% endif %}">
+      <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required">*</span>{% endif %}</label>
+      {{ field }}
+      {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-actions"><a class="button secondary" href="{% url 'consultations:suggestions' %}">Annuler</a><button class="button primary" type="submit">{% if is_edit %}Enregistrer{% else %}Ajouter{% endif %}</button></div>
+</form>
+{% endblock %}

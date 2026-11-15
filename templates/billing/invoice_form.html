@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle facture{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">GESTION FINANCIÈRE</p><h1>Nouvelle facture</h1><p class="muted">Enregistrez le prix d’une consultation. Les paiements pourront être ajoutés ensuite.</p></div>
+  <a class="button secondary" href="{% url 'billing:invoice_list' %}">Annuler</a>
+</header>
+<form method="post" class="panel patient-form">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+  <section class="form-section"><h2>Facturation de la consultation</h2><div class="form-grid">
+    {% for field in form %}
+    <div class="field {% if field.name == 'notes' %}wide{% endif %}">
+      <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required">*</span>{% endif %}</label>
+      {{ field }}
+      {% if field.name == "consultation_fee" %}<small class="muted small">Montant en dinars tunisiens (TND), avec trois décimales au maximum.</small>{% endif %}
+      {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </div>
+    {% endfor %}
+  </div></section>
+  <p class="notice">Le patient doit être sélectionné dans les dossiers actifs. Une facture créée n’est pas supprimée; vérifiez les informations avant validation.</p>
+  <div class="form-actions"><a class="button secondary" href="{% url 'billing:invoice_list' %}">Annuler</a><button class="button primary" type="submit">Créer la facture</button></div>
+</form>
+{% endblock %}

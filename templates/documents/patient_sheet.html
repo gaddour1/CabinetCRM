@@ -1,0 +1,90 @@
+{% extends "documents/base.html" %}
+{% load document_tags %}
+{% block title %}Fiche patient {{ patient.record_number }}{% endblock %}
+{% block document_type %}Fiche patient{% endblock %}
+{% block content %}
+<h1>{{ patient.first_name }} {{ patient.last_name }}</h1>
+<p class="document-subtitle">Dossier n° {{ patient.record_number }}</p>
+
+<section>
+  <h2>Identité et coordonnées</h2>
+  <dl class="info-grid">
+    <div class="info-item"><dt>Date de naissance</dt><dd>{{ patient.date_of_birth|date:"d/m/Y"|document_value }}</dd></div>
+    <div class="info-item"><dt>Sexe</dt><dd>{{ patient.get_sex_display|document_value }}</dd></div>
+    <div class="info-item"><dt>CIN</dt><dd>{{ patient.cin|document_value }}</dd></div>
+    <div class="info-item"><dt>Téléphone</dt><dd>{{ patient.phone|document_value }}</dd></div>
+    <div class="info-item"><dt>Profession</dt><dd>{{ patient.profession|document_value }}</dd></div>
+    <div class="info-item"><dt>Groupe sanguin</dt><dd>{{ patient.blood_group|document_value }}</dd></div>
+    <div class="info-item"><dt>Adresse</dt><dd>{{ patient.address|document_value }}</dd></div>
+    <div class="info-item"><dt>État du dossier</dt><dd>{% if patient.is_archived %}Archivé{% else %}Actif{% endif %}</dd></div>
+    <div class="info-item"><dt>Dossier créé le</dt><dd>{{ patient.created_at|date:"d/m/Y H:i" }}</dd></div>
+    <div class="info-item"><dt>Dossier modifié le</dt><dd>{{ patient.updated_at|date:"d/m/Y H:i" }}</dd></div>
+    {% if patient.archived_at %}<div class="info-item"><dt>Dossier archivé le</dt><dd>{{ patient.archived_at|date:"d/m/Y H:i" }}</dd></div>{% endif %}
+  </dl>
+</section>
+
+<section>
+  <h2>Informations médicales</h2>
+  <dl class="info-grid single">
+    <div class="info-item"><dt>Antécédents médicaux</dt><dd>{{ patient.medical_history|document_value }}</dd></div>
+    <div class="info-item"><dt>Allergies</dt><dd>{{ patient.allergies|document_value }}</dd></div>
+    <div class="info-item"><dt>Traitements habituels</dt><dd>{{ patient.usual_treatments|document_value }}</dd></div>
+  </dl>
+</section>
+
+<section>
+  <h2>Historique des consultations</h2>
+  {% if consultations %}
+  {% for consultation in consultations %}
+  <article>
+    <h3>{{ consultation.reference }} · {{ consultation.consultation_date|date:"d/m/Y" }}</h3>
+    <dl class="info-grid">
+      <div class="info-item"><dt>Motif</dt><dd>{{ consultation.reason|document_value }}</dd></div>
+      <div class="info-item"><dt>Médecin</dt><dd>{{ consultation.doctor.get_full_name|default:consultation.doctor.username }}</dd></div>
+      <div class="info-item"><dt>Examen clinique et constantes</dt><dd>TA : {{ consultation.blood_pressure|document_value }} · Température : {{ consultation.temperature|document_value }} · GAD : {{ consultation.gad|document_value }} · SpO2 : {{ consultation.spo2|document_value }} · FC : {{ consultation.heart_rate|document_value }}</dd></div>
+      <div class="info-item"><dt>Autres observations cliniques</dt><dd>{{ consultation.clinical_other|document_value }}</dd></div>
+      <div class="info-item"><dt>Acte médical</dt><dd>{{ consultation.medical_act|document_value }}</dd></div>
+      <div class="info-item"><dt>Conduite à tenir</dt><dd>{{ consultation.medical_conduct|document_value }}</dd></div>
+      <div class="info-item"><dt>Examens biologiques</dt><dd>{{ consultation.biological_exams|document_value }}</dd></div>
+      <div class="info-item"><dt>Examens d’imagerie</dt><dd>{{ consultation.imaging_exams|document_value }}</dd></div>
+      <div class="info-item"><dt>Autres examens complémentaires</dt><dd>{{ consultation.complementary_exams|document_value }}</dd></div>
+      <div class="info-item"><dt>Destination</dt><dd>{{ consultation.destination|document_value }}</dd></div>
+      <div class="info-item"><dt>Assurance déclarée</dt><dd>{% if consultation.has_insurance %}Oui{% else %}Non{% endif %}</dd></div>
+      {% if consultation.has_insurance %}
+      <div class="info-item"><dt>Dossier d’assurance</dt><dd>{% if consultation.insurance_file_filled == None %}<span class="missing">Non renseigné</span>{% elif consultation.insurance_file_filled %}Oui{% else %}Non{% endif %}</dd></div>
+      <div class="info-item"><dt>Type d’assurance</dt><dd>{{ consultation.get_insurance_type_display|document_value }}</dd></div>
+      <div class="info-item"><dt>Organisme assureur</dt><dd>{{ consultation.insurer|document_value }}</dd></div>
+      <div class="info-item"><dt>Numéro d’affiliation</dt><dd>{{ consultation.affiliation_number|document_value }}</dd></div>
+      <div class="info-item"><dt>Commentaire d’assurance</dt><dd>{{ consultation.insurance_comment|document_value }}</dd></div>
+      <div class="info-item"><dt>Vérifié par</dt><dd>{% if consultation.insurance_verified_by %}{{ consultation.insurance_verified_by.get_full_name|default:consultation.insurance_verified_by.username }}{% else %}<span class="missing">Non renseigné</span>{% endif %}</dd></div>
+      <div class="info-item"><dt>Vérifié le</dt><dd>{{ consultation.insurance_verified_at|date:"d/m/Y H:i"|document_value }}</dd></div>
+      {% endif %}
+      <div class="info-item"><dt>Facture</dt><dd>{{ consultation.invoice.number }} · {{ consultation.invoice.consultation_fee|floatformat:3 }} TND · payé {{ consultation.invoice.amount_paid|floatformat:3 }} TND · solde {{ consultation.invoice.remaining_amount|floatformat:3 }} TND · {{ consultation.invoice.financial_status_display }}</dd></div>
+    </dl>
+  </article>
+  {% endfor %}
+  {% else %}<p class="empty-note">Aucune consultation enregistrée.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Facturation et paiements</h2>
+  {% if invoices %}
+  {% for invoice in invoices %}
+  <h3>{{ invoice.number }} · {{ invoice.consultation_date|date:"d/m/Y" }}</h3>
+  <p>Montant : {{ invoice.consultation_fee|floatformat:3 }} TND · Payé : {{ invoice.amount_paid|floatformat:3 }} TND · Solde : {{ invoice.remaining_amount|floatformat:3 }} TND · Statut : {{ invoice.financial_status_display }}</p>
+  {% if invoice.payments.all %}
+  <table class="data-table">
+    <thead><tr><th>Date</th><th>Montant</th><th>Moyen</th><th>Référence</th></tr></thead>
+    <tbody>{% for payment in invoice.payments.all %}<tr><td>{{ payment.paid_at|date:"d/m/Y H:i" }}</td><td>{{ payment.amount|floatformat:3 }} TND</td><td>{{ payment.get_method_display }}</td><td>{{ payment.reference|document_value }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="empty-note">Aucun paiement enregistré.</p>{% endif %}
+  {% endfor %}
+  {% else %}<p class="empty-note">Aucune facture enregistrée.</p>{% endif %}
+</section>
+<section class="signature-area">
+  <div class="signature-box">
+    <p>{{ cabinet_info.doctor }}</p>
+    Signature et cachet
+  </div>
+</section>
+{% endblock %}

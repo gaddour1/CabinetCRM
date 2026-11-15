@@ -1,0 +1,39 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Document médical{% endblock %} · {{ cabinet_info.name }}</title>
+  <link rel="stylesheet" href="{% static 'css/documents/base.css' %}">
+</head>
+<body>
+  <nav class="screen-actions" aria-label="Actions du document">
+    <button type="button" onclick="window.print()">Imprimer</button>
+    <a href="?download=1">Télécharger le PDF</a>
+  </nav>
+  <main class="document">
+    <header class="document-header">
+      {% if cabinet_info.logo_available %}
+      <img class="cabinet-logo" src="{% static cabinet_info.logo %}" alt="Logo du cabinet">
+      {% endif %}
+      <div class="brand">
+        <p class="brand-name">{{ cabinet_info.name }}</p>
+        <p class="brand-doctor">{{ cabinet_info.doctor }}</p>
+        <p class="brand-signature">{{ cabinet_info.signature }}</p>
+      </div>
+      <div class="document-meta">
+        <p class="document-kind">{% block document_type %}Document{% endblock %}</p>
+        <p>N° {{ document_number }}</p>
+        <p>Édité le {{ generated_at|date:"d/m/Y" }}</p>
+      </div>
+    </header>
+    <div class="gold-rule"></div>
+    {% block content %}{% endblock %}
+    <footer class="document-footer">
+      <span>Tél. {{ cabinet_info.phone }}</span>
+      <span class="arabic-address" dir="rtl" lang="ar">{{ cabinet_info.address }}</span>
+    </footer>
+  </main>
+</body>
+</html>

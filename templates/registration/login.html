@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<section class="login-card">
+  <a class="brand login-brand" href="{% url 'core:login' %}">
+    <img class="brand-mark login-brand-mark" src="/static/img/farabi.jpg" alt="Farabi — Cabinet médical">
+  </a>
+  {% if form.errors %}<div class="message error">Identifiant ou mot de passe incorrect.</div>{% endif %}
+  <form method="post" class="form-stack">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <label for="id_username">Nom d’utilisateur</label>
+    <input id="id_username" name="username" type="text" autocomplete="username" required autofocus>
+    <label for="id_password">Mot de passe</label>
+    <input id="id_password" name="password" type="password" autocomplete="current-password" required>
+    <button class="button primary full-width" type="submit">Se connecter</button>
+  </form>
+</section>
+{% endblock %}

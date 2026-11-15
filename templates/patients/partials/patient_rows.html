@@ -1,0 +1,10 @@
+{% for patient in patients %}
+<tr>
+  <td><strong>{{ patient.first_name }} {{ patient.last_name }}</strong><small class="table-sub">{{ patient.get_sex_display|default:"" }}</small></td>
+  <td><code>{{ patient.record_number }}</code></td>
+  <td class="text-nowrap">{{ patient.date_of_birth|date:"d/m/Y"|default:"—" }}</td>
+  <td class="text-nowrap">{{ patient.phone|default:"—" }}</td>
+  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'patients:detail' patient.pk %}">Consulter <span aria-hidden="true">→</span></a></td>
+</tr>
+{% empty %}
+{% endfor %}

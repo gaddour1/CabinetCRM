@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+staticfiles/
+media/
+backups/
+.pytest_cache/
+.coverage
+windows/launcher/bin/
+windows/launcher/obj/
+windows/distribution/payload/

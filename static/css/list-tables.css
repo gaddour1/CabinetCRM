@@ -1,0 +1,155 @@
+.list-toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(170px, 220px) minmax(140px, 170px) auto auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.list-search {
+  min-width: 0;
+  align-self: end;
+}
+
+.list-search .input-group-text {
+  color: #647687;
+  background: #f8fafc;
+}
+
+.list-search .form-control,
+.list-filter-field .form-select {
+  min-height: 42px;
+  font-size: 0.9rem;
+}
+
+.list-filter-field {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  color: #526579;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.list-actions .btn,
+.list-archive-link {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.live-list-status {
+  justify-self: end;
+  margin-bottom: 10px;
+  color: #526579;
+  font-size: 0.75rem;
+}
+
+.list-results .table {
+  --bs-table-striped-bg: #f8fafc;
+  --bs-table-hover-bg: #edf5fa;
+}
+
+.list-results .table thead th {
+  padding: 0.9rem 1rem;
+  color: #526579;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.list-results .table tbody td {
+  padding: 0.9rem 1rem;
+  color: #43576a;
+  font-size: 0.87rem;
+  white-space: normal;
+}
+
+.list-results .table tbody td strong {
+  color: #213547;
+}
+
+.list-results .table .table-sub {
+  margin-top: 5px;
+  font-size: 0.76rem;
+}
+
+.list-results .table code {
+  color: #42596b;
+  font-size: 0.8rem;
+}
+
+.list-results .badge {
+  font-size: 0.73rem;
+  font-weight: 650;
+}
+
+.list-results[aria-busy="true"] {
+  opacity: 0.65;
+  transition: opacity 120ms ease-in-out;
+}
+
+@media (max-width: 1100px) {
+  .list-toolbar {
+    grid-template-columns: minmax(220px, 1fr) minmax(150px, 200px) minmax(130px, 160px);
+  }
+
+  .list-actions {
+    grid-column: 2;
+  }
+
+  .list-archive-link {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .live-list-status {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 650px) {
+  .list-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    gap: 12px;
+  }
+
+  .list-search {
+    grid-column: 1 / -1;
+  }
+
+  .list-actions {
+    grid-column: 1 / -1;
+  }
+
+  .list-actions .btn {
+    flex: 1;
+  }
+
+  .list-archive-link {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .live-list-status {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-self: start;
+    margin-bottom: 0;
+  }
+
+  .list-results .table thead th,
+  .list-results .table tbody td {
+    padding: 0.75rem;
+  }
+}

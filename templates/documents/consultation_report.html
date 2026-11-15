@@ -1,0 +1,50 @@
+{% extends "documents/base.html" %}
+{% load document_tags %}
+{% block title %}Compte rendu {{ consultation.reference }}{% endblock %}
+{% block document_type %}Compte rendu{% endblock %}
+{% block content %}
+<h1>Compte rendu de consultation</h1>
+<p class="document-subtitle">{{ consultation.reference }} · {{ consultation.consultation_date|date:"d/m/Y" }}</p>
+
+<section>
+  <h2>Patient et consultation</h2>
+  <dl class="info-grid">
+    <div class="info-item"><dt>Patient</dt><dd>{{ consultation.patient.first_name }} {{ consultation.patient.last_name }}</dd></div>
+    <div class="info-item"><dt>Date de naissance</dt><dd>{{ consultation.patient.date_of_birth|date:"d/m/Y"|document_value }}</dd></div>
+    <div class="info-item"><dt>CIN</dt><dd>{{ consultation.patient.cin|document_value }}</dd></div>
+    <div class="info-item"><dt>Téléphone</dt><dd>{{ consultation.patient.phone|document_value }}</dd></div>
+    <div class="info-item"><dt>Motif</dt><dd>{{ consultation.reason|document_value }}</dd></div>
+  </dl>
+</section>
+
+<section>
+  <h2>Examen clinique et constantes</h2>
+  <dl class="info-grid">
+    <div class="info-item"><dt>TA (mmHg)</dt><dd>{{ consultation.blood_pressure|document_value }}</dd></div>
+    <div class="info-item"><dt>Température (°C)</dt><dd>{{ consultation.temperature|document_value }}</dd></div>
+    <div class="info-item"><dt>GAD</dt><dd>{{ consultation.gad|document_value }}</dd></div>
+    <div class="info-item"><dt>SpO2 (%)</dt><dd>{{ consultation.spo2|document_value }}</dd></div>
+    <div class="info-item"><dt>FC (bpm)</dt><dd>{{ consultation.heart_rate|document_value }}</dd></div>
+    <div class="info-item"><dt>Autres observations cliniques</dt><dd>{{ consultation.clinical_other|document_value }}</dd></div>
+  </dl>
+</section>
+
+<section>
+  <h2>Actes, conduite à tenir et examens</h2>
+  <dl class="info-grid single">
+    <div class="info-item"><dt>Acte médical</dt><dd>{{ consultation.medical_act|document_value }}</dd></div>
+    <div class="info-item"><dt>Conduite à tenir</dt><dd>{{ consultation.medical_conduct|document_value }}</dd></div>
+    <div class="info-item"><dt>Examens biologiques</dt><dd>{{ consultation.biological_exams|document_value }}</dd></div>
+    <div class="info-item"><dt>Examens d’imagerie</dt><dd>{{ consultation.imaging_exams|document_value }}</dd></div>
+    <div class="info-item"><dt>Autres examens complémentaires</dt><dd>{{ consultation.complementary_exams|document_value }}</dd></div>
+    <div class="info-item"><dt>Destination du malade</dt><dd>{{ consultation.destination|document_value }}</dd></div>
+  </dl>
+</section>
+
+<section class="signature-area">
+  <div class="signature-box">
+    <p>{{ consultation.doctor.get_full_name|default:consultation.doctor.username }}</p>
+    Signature et cachet
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">VOTRE CABINET</p><h1>Bonjour, {{ request.user.first_name|default:request.user.username }}</h1><p class="muted">Voici un aperçu de votre activité.</p></div>
+  <a class="button primary" href="{% url 'patients:create' %}">+ Nouveau patient</a>
+</header>
+<section class="stats-grid" aria-label="Indicateurs">
+  <article class="stat-card"><span class="stat-icon blue">♡</span><p>Dossiers patients</p><strong>{{ patient_count }}</strong><small>Patients actifs</small></article>
+  <article class="stat-card"><span class="stat-icon green">↗</span><p>Nouveaux dossiers</p><strong>{{ new_today_count }}</strong><small>Aujourd’hui</small></article>
+  <article class="stat-card"><span class="stat-icon violet">✚</span><p>Médecins actifs</p><strong>{{ doctor_count }}</strong><small>Comptes médecins</small></article>
+</section>
+<section class="panel">
+  <div class="panel-heading"><div><h2>Patients récemment enregistrés</h2><p class="muted">Les dernières fiches actives du cabinet.</p></div><a class="text-link" href="{% url 'patients:list' %}">Tous les patients →</a></div>
+  {% if recent_patients %}
+  <div class="table-wrap"><table><thead><tr><th>Patient</th><th>N° dossier</th><th>Téléphone</th><th></th></tr></thead><tbody>
+  {% for patient in recent_patients %}<tr><td><strong>{{ patient.first_name }} {{ patient.last_name }}</strong></td><td>{{ patient.record_number }}</td><td>{{ patient.phone|default:"—" }}</td><td><a class="text-link" href="{% url 'patients:detail' patient.pk %}">Ouvrir</a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty-state"><span>♡</span><h3>Aucun patient pour le moment</h3><p>Ajoutez un dossier fictif pour découvrir le module.</p><a class="button primary" href="{% url 'patients:create' %}">Créer un patient</a></div>{% endif %}
+</section>
+{% endblock %}

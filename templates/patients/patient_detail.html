@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.first_name }} {{ patient.last_name }}{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><a class="back-link" href="{% url 'patients:list' %}">← Retour aux patients</a><p class="eyebrow">DOSSIER {{ patient.record_number }}</p><h1>{{ patient.first_name }} {{ patient.last_name }}</h1><p class="muted">{% if patient.is_archived %}<span class="badge archived">Dossier archivé</span>{% else %}Dossier créé le {{ patient.created_at|date:"d/m/Y" }}{% endif %}</p></div>
+  <div class="header-actions"><a class="button secondary" href="{% url 'documents:patient_sheet' patient.pk %}">Imprimer la fiche patient</a><a class="button secondary" href="{% url 'patients:update' patient.pk %}">Modifier</a>
+  {% if patient.is_archived %}<form method="post" action="{% url 'patients:restore' patient.pk %}">{% csrf_token %}<button class="button primary" type="submit">Restaurer</button></form>
+  {% else %}<form method="post" action="{% url 'patients:archive' patient.pk %}" onsubmit="return confirm('Archiver ce dossier ? Il restera conservé et pourra être restauré.');">{% csrf_token %}<button class="button danger-outline" type="submit">Archiver</button></form>{% endif %}</div>
+</header>
+<div class="detail-grid">
+  <section class="panel"><div class="panel-heading"><h2>Identité et coordonnées</h2></div><dl class="detail-list">
+    <div><dt>Nom complet</dt><dd>{{ patient.first_name }} {{ patient.last_name }}</dd></div><div><dt>Date de naissance</dt><dd>{{ patient.date_of_birth|date:"d/m/Y"|default:"Non renseignée" }}</dd></div><div><dt>Sexe</dt><dd>{{ patient.get_sex_display|default:"Non renseigné" }}</dd></div><div><dt>CIN</dt><dd>{{ patient.cin|default:"Non renseignée" }}</dd></div><div><dt>Téléphone</dt><dd>{{ patient.phone|default:"Non renseigné" }}</dd></div><div><dt>Profession</dt><dd>{{ patient.profession|default:"Non renseignée" }}</dd></div><div><dt>Groupe sanguin</dt><dd>{{ patient.blood_group|default:"Non renseigné" }}</dd></div><div class="wide"><dt>Adresse</dt><dd>{{ patient.address|linebreaksbr|default:"Non renseignée" }}</dd></div>
+  </dl></section>
+  <section class="panel"><div class="panel-heading"><h2>Informations médicales</h2></div><dl class="detail-list medical-list">
+    <div class="wide"><dt>Antécédents médicaux</dt><dd>{{ patient.medical_history|linebreaksbr|default:"Non renseignés" }}</dd></div><div class="wide"><dt>Allergies</dt><dd>{{ patient.allergies|linebreaksbr|default:"Non renseignées" }}</dd></div><div class="wide"><dt>Traitements habituels</dt><dd>{{ patient.usual_treatments|linebreaksbr|default:"Non renseignés" }}</dd></div>
+  </dl><p class="notice">Aucune donnée de démonstration n’est ajoutée automatiquement. Pour les essais, utilisez exclusivement des informations fictives.</p></section>
+  <section class="panel billing-history">
+    <div class="panel-heading"><div><h2>Historique des consultations</h2><p class="muted">Statuts de paiement calculés sur les règlements et assurance enregistrée pour chaque consultation.</p></div>{% if not patient.is_archived %}<a class="button primary" href="{% url 'consultations:create' %}?patient={{ patient.pk }}">+ Nouvelle consultation</a>{% endif %}</div>
+    {% if consultations %}
+    <div class="table-wrap"><table><thead><tr><th>Référence</th><th>Date</th><th>Motif</th><th>Paiement</th><th>Assurance</th><th>Action</th></tr></thead><tbody>
+      {% for consultation in consultations %}<tr><td><strong>{{ consultation.reference }}</strong></td><td>{{ consultation.consultation_date|date:"d/m/Y" }}</td><td>{{ consultation.reason }}</td><td><span class="badge status-payment-{{ consultation.payment_status|lower }}">{{ consultation.payment_status_display }}</span><small class="table-sub">{{ consultation.amount_paid|floatformat:3 }} / {{ consultation.consultation_fee|floatformat:3 }} TND</small></td><td><span class="badge status-insurance-{{ consultation.insurance_status|lower }}">{{ consultation.insurance_status_display }}</span></td><td><a class="text-link" href="{% url 'consultations:detail' consultation.pk %}">Détails →</a></td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<div class="empty-state"><p>Aucune consultation enregistrée.</p>{% if not patient.is_archived %}<a class="button primary" href="{% url 'consultations:create' %}?patient={{ patient.pk }}">Créer une consultation</a>{% endif %}</div>{% endif %}
+  </section>
+  <section class="panel billing-history">
+    <div class="panel-heading"><div><h2>Facturation et paiements</h2><p class="muted">Consultations facturées et historique financier.</p></div>{% if not patient.is_archived %}<a class="button primary" href="{% url 'billing:invoice_create' %}?patient={{ patient.pk }}">+ Nouvelle facture</a>{% endif %}</div>
+    {% if invoices %}
+    <div class="table-wrap"><table><thead><tr><th>Facture</th><th>Date de consultation</th><th>Montant</th><th>Payé</th><th>Reste à payer</th><th>Statut</th><th></th></tr></thead><tbody>
+      {% for invoice in invoices %}<tr><td><strong>{{ invoice.number }}</strong></td><td>{{ invoice.consultation_date|date:"d/m/Y" }}</td><td>{{ invoice.consultation_fee|floatformat:3 }} TND</td><td>{{ invoice.amount_paid|floatformat:3 }} TND</td><td>{{ invoice.remaining_amount|floatformat:3 }} TND</td><td><span class="badge status-{{ invoice.financial_status|lower }}">{{ invoice.financial_status_display }}</span></td><td><a class="text-link" href="{% url 'billing:invoice_detail' invoice.pk %}">Détails →</a></td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<div class="empty-state"><p>Aucune facture pour ce patient.</p>{% if not patient.is_archived %}<a class="button primary" href="{% url 'billing:invoice_create' %}?patient={{ patient.pk }}">Créer une facture</a>{% endif %}</div>{% endif %}
+  </section>
+</div>
+{% endblock %}

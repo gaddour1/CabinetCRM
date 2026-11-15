@@ -1,0 +1,40 @@
+{% extends "documents/base.html" %}
+{% load document_tags %}
+{% block title %}Reçu {{ document_number }}{% endblock %}
+{% block document_type %}Reçu de paiement{% endblock %}
+{% block content %}
+<h1>Reçu de paiement</h1>
+<p class="document-subtitle">{{ document_number }} · Facture {{ invoice.number }}</p>
+
+<section>
+  <h2>Payeur et règlement</h2>
+  <dl class="info-grid">
+    <div class="info-item"><dt>Patient</dt><dd>{{ invoice.patient.first_name }} {{ invoice.patient.last_name }}</dd></div>
+    <div class="info-item"><dt>CIN</dt><dd>{{ invoice.patient.cin|document_value }}</dd></div>
+    <div class="info-item"><dt>Date et heure du paiement</dt><dd>{{ payment.paid_at|date:"d/m/Y H:i" }}</dd></div>
+    <div class="info-item"><dt>Montant de ce paiement</dt><dd>{{ payment.amount|floatformat:3 }} TND</dd></div>
+    <div class="info-item"><dt>Moyen de paiement</dt><dd>{{ payment.get_method_display }}</dd></div>
+    <div class="info-item"><dt>Référence</dt><dd>{{ payment.reference|document_value }}</dd></div>
+    <div class="info-item"><dt>Note</dt><dd>{{ payment.notes|document_value }}</dd></div>
+    <div class="info-item"><dt>Enregistré par</dt><dd>{{ payment.created_by.get_full_name|default:payment.created_by.username }}</dd></div>
+  </dl>
+</section>
+
+<section>
+  <h2>Situation actuelle de la facture</h2>
+  <div class="financial-summary">
+    <div><span>Montant total</span><strong>{{ invoice.consultation_fee|floatformat:3 }} TND</strong></div>
+    <div><span>Total payé</span><strong>{{ invoice.amount_paid|floatformat:3 }} TND</strong></div>
+    <div><span>Solde restant</span><strong>{{ invoice.remaining_amount|floatformat:3 }} TND</strong></div>
+  </div>
+  <p>Statut calculé : <span class="status">{{ invoice.financial_status_display }}</span></p>
+  <p>Date limite de paiement : {{ invoice.due_date|date:"d/m/Y"|document_value }}</p>
+</section>
+
+<section class="signature-area">
+  <div class="signature-box">
+    <p>{{ cabinet_info.name }}</p>
+    Signature et cachet
+  </div>
+</section>
+{% endblock %}

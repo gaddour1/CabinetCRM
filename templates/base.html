@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}Cabinet médical{% endblock %} · Cabinet</title>
+  {% block bootstrap_styles %}{% endblock %}
+  <link rel="stylesheet" href="/static/css/app.css?v=6">
+  {% block page_styles %}{% endblock %}
+</head>
+<body>
+  {% if request.user.is_authenticated %}
+  <aside class="sidebar">
+    <a class="brand" href="{% url 'core:dashboard' %}">
+      <img class="brand-mark" src="/static/img/farabi.jpg" alt="Farabi — Cabinet médical">
+    </a>
+    <nav aria-label="Navigation principale">
+      <a class="nav-link {% if request.resolver_match.app_name == 'core' %}active{% endif %}" href="{% url 'core:dashboard' %}"><span>◫</span> Tableau de bord</a>
+      <a class="nav-link {% if request.resolver_match.app_name == 'patients' %}active{% endif %}" href="{% url 'patients:list' %}"><span>♡</span> Patients</a>
+      <a class="nav-link {% if request.resolver_match.app_name == 'consultations' %}active{% endif %}" href="{% url 'consultations:list' %}"><span>◷</span> Consultations</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'suggestions' %}active{% endif %}" href="{% url 'consultations:suggestions' %}"><span>✦</span> Suggestions</a>
+      <a class="nav-link {% if request.resolver_match.app_name == 'billing' %}active{% endif %}" href="{% url 'billing:invoice_list' %}"><span>▤</span> Facturation</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-chip"><span class="avatar">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</span><span><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><small>{{ request.user.get_role_display }}</small></span></div>
+      <form method="post" action="{% url 'core:logout' %}">
+        {% csrf_token %}
+        <button class="logout-button" type="submit">Se déconnecter</button>
+      </form>
+    </div>
+  </aside>
+  {% endif %}
+  <main class="{% if request.user.is_authenticated %}main-content{% else %}login-main{% endif %}">
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+    {% if request.resolver_match.url_name != "login" %}
+    <footer class="footer">Cabinet médical · Données d’essai uniquement fictives</footer>
+    {% endif %}
+  </main>
+  {% block page_scripts %}{% endblock %}
+</body>
+</html>

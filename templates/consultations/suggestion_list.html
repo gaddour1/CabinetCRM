@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Suggestions médicales{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">OUTILS MÉDICAUX</p><h1>Suggestions médicales</h1><p class="muted">Gérez vos propositions personnelles. La bibliothèque commune est disponible dans les formulaires.</p></div>
+  <a class="button primary" href="{% url 'consultations:suggestion_create' %}">Ajouter une suggestion</a>
+</header>
+<div class="toolbar">
+  {% if include_archived %}<a class="button secondary" href="{% url 'consultations:suggestions' %}">Voir les suggestions actives</a>{% else %}<a class="button secondary" href="{% url 'consultations:suggestions' %}?archives=1">Voir aussi les suggestions archivées</a>{% endif %}
+</div>
+<section class="panel">
+  {% if suggestions %}
+  <div class="table-wrap"><table><thead><tr><th>Proposition</th><th>Catégorie</th><th>Origine</th><th>Utilisations</th><th>État</th><th>Actions</th></tr></thead><tbody>
+    {% for suggestion in suggestions %}
+    <tr>
+      <td><strong>{{ suggestion.text }}</strong></td>
+      <td>{{ suggestion.get_category_display }}</td>
+      <td>{% if suggestion.doctor_id %}Personnelle{% else %}Bibliothèque commune{% endif %}</td>
+      <td>{{ suggestion.usage_count }}</td>
+      <td>{% if suggestion.is_active %}Active{% else %}Archivée{% endif %}</td>
+      <td>
+        {% if suggestion.doctor_id == request.user.pk %}
+        <div class="suggestion-actions"><a class="button secondary" href="{% url 'consultations:suggestion_update' suggestion.pk %}">Modifier</a>
+          <form method="post" action="{% url 'consultations:suggestion_archive' suggestion.pk %}">{% csrf_token %}<button class="button secondary" type="submit">{% if suggestion.is_active %}Archiver{% else %}Réactiver{% endif %}</button></form>
+        </div>
+        {% else %}<span class="muted small">Lecture seule</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody></table></div>
+  {% else %}
+  <div class="empty-state"><h3>Aucune suggestion personnelle</h3><p>Ajoutez vos expressions habituelles; elles resteront modifiables et archivables.</p><a class="button primary" href="{% url 'consultations:suggestion_create' %}">Ajouter une suggestion</a></div>
+  {% endif %}
+</section>
+{% endblock %}

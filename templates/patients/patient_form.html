@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">DOSSIERS MÉDICAUX</p><h1>{{ title }}</h1><p class="muted">Les informations médicales sont accessibles aux comptes médecins autorisés.</p></div>
+  <a class="button secondary" href="{% if patient %}{% url 'patients:detail' patient.pk %}{% else %}{% url 'patients:list' %}{% endif %}">Annuler</a>
+</header>
+<form method="post" class="panel patient-form">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+  <section class="form-section"><h2>Identité et coordonnées</h2><div class="form-grid">
+    {% for field in form %}{% if field.name == "first_name" or field.name == "last_name" or field.name == "date_of_birth" or field.name == "sex" or field.name == "cin" or field.name == "phone" or field.name == "address" or field.name == "profession" or field.name == "blood_group" %}
+    <div class="field {% if field.name == 'address' %}wide{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required">*</span>{% endif %}</label>{{ field }}{% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+    {% endif %}{% endfor %}
+  </div></section>
+  <section class="form-section"><h2>Informations médicales</h2><p class="muted small">Ces informations sont confidentielles et réservées à la prise en charge médicale.</p><div class="form-grid">
+    {% for field in form %}{% if field.name == "medical_history" or field.name == "allergies" or field.name == "usual_treatments" %}
+    <div class="field wide"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+    {% endif %}{% endfor %}
+  </div></section>
+  <div class="form-actions"><a class="button secondary" href="{% if patient %}{% url 'patients:detail' patient.pk %}{% else %}{% url 'patients:list' %}{% endif %}">Annuler</a><button class="button primary" type="submit">Enregistrer le dossier</button></div>
+</form>
+{% endblock %}

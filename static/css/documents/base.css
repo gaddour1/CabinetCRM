@@ -1,0 +1,349 @@
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("../../fonts/CormorantGaramond[wght].ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400 700;
+}
+
+@font-face {
+  font-family: "Noto Naskh Arabic";
+  src: url("../../fonts/NotoNaskhArabic[wght].ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400 700;
+}
+
+:root {
+  color-scheme: light;
+  --gold: #c9a227;
+  --gold-light: #f3d77a;
+  --gold-dark: #8a5a00;
+  --brand-brown: #7a4e0f;
+  --text: #3a2e1f;
+  --ivory: #fffdf8;
+  --pale-gold: #f4ebd3;
+  --muted: #827b70;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f2efe8;
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 10pt;
+  line-height: 1.5;
+}
+
+.document {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 18px auto;
+  padding: 18mm 17mm 28mm;
+  background: var(--ivory);
+  box-shadow: 0 3px 22px #3a2e1f1a;
+}
+
+.screen-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 210mm;
+  margin: 18px auto 0;
+  font-family: Arial, sans-serif;
+}
+
+.screen-actions button,
+.screen-actions a {
+  padding: 9px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 5px;
+  background: var(--ivory);
+  color: var(--brand-brown);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.document-header {
+  display: grid;
+  grid-template-columns: 25mm 1fr auto;
+  align-items: center;
+  gap: 8mm;
+  min-height: 25mm;
+}
+
+.cabinet-logo {
+  display: block;
+  width: 24mm;
+  height: 24mm;
+  object-fit: contain;
+}
+
+.brand p,
+.document-meta p {
+  margin: 0;
+}
+
+.brand-name,
+.document-kind {
+  color: var(--brand-brown);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 17pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.brand-doctor {
+  margin-top: 1mm !important;
+  font-size: 11pt;
+}
+
+.brand-signature {
+  color: var(--gold-dark);
+  font-size: 9pt;
+  font-style: italic;
+}
+
+.document-meta {
+  min-width: 42mm;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 8.5pt;
+  text-align: right;
+}
+
+.document-meta .document-kind {
+  margin-bottom: 1.5mm;
+  color: var(--brand-brown);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 13pt;
+}
+
+.gold-rule {
+  height: 1px;
+  margin: 5mm 0 7mm;
+  background: linear-gradient(90deg, var(--gold-light), var(--gold-dark));
+}
+
+h1,
+h2,
+h3 {
+  color: var(--brand-brown);
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+h1 {
+  margin: 0 0 5mm;
+  font-size: 19pt;
+  letter-spacing: 0.045em;
+}
+
+h2 {
+  margin: 7mm 0 3mm;
+  padding-bottom: 1.5mm;
+  border-bottom: 1px solid var(--pale-gold);
+  font-size: 13pt;
+  letter-spacing: 0.035em;
+}
+
+h3 {
+  margin: 4mm 0 2mm;
+  font-size: 11pt;
+}
+
+.document-subtitle {
+  margin: -3mm 0 5mm;
+  color: var(--muted);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2mm 8mm;
+}
+
+.info-grid.single {
+  grid-template-columns: 1fr;
+}
+
+.info-item {
+  min-width: 0;
+  padding: 1.5mm 0;
+  border-bottom: 1px solid #f4ebd388;
+  overflow-wrap: anywhere;
+}
+
+.info-item dt {
+  color: var(--brand-brown);
+  font-family: Arial, sans-serif;
+  font-size: 8pt;
+  font-weight: 700;
+}
+
+.info-item dd {
+  margin: 0.5mm 0 0;
+  white-space: pre-wrap;
+}
+
+.missing {
+  color: #8b877f;
+  font-style: italic;
+}
+
+.financial-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3mm;
+  margin: 4mm 0;
+}
+
+.financial-summary > div {
+  padding: 3mm;
+  border: 1px solid var(--pale-gold);
+  border-radius: 2mm;
+  text-align: center;
+}
+
+.financial-summary span,
+.financial-summary strong {
+  display: block;
+}
+
+.financial-summary span {
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 8pt;
+}
+
+.financial-summary strong {
+  margin-top: 1mm;
+  color: var(--brand-brown);
+  font-size: 12pt;
+}
+
+.status {
+  color: var(--brand-brown);
+  font-weight: 700;
+}
+
+.data-table {
+  width: 100%;
+  margin: 2mm 0 4mm;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+}
+
+.data-table th,
+.data-table td {
+  padding: 2mm;
+  border: 1px solid var(--pale-gold);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  background: #f4ebd344;
+  color: var(--brand-brown);
+  font-family: Arial, sans-serif;
+  font-size: 8pt;
+}
+
+.signature-area {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.signature-box {
+  width: 72mm;
+  min-height: 29mm;
+  padding: 3mm;
+  border: 1px solid var(--gold);
+  color: var(--brand-brown);
+  text-align: center;
+}
+
+.signature-box p {
+  margin: 0 0 15mm;
+}
+
+.document-footer {
+  margin-top: 12mm;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8mm;
+  padding-top: 2mm;
+  border-top: 1px solid var(--gold);
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 7.5pt;
+}
+
+.arabic-address {
+  max-width: 135mm;
+  color: var(--brand-brown);
+  font-family: "Noto Naskh Arabic", "Times New Roman", serif;
+  font-size: 9pt;
+  text-align: right;
+}
+
+.empty-note {
+  color: var(--muted);
+  font-style: italic;
+}
+
+@page {
+  size: A4;
+  margin: 15mm 0 22mm;
+
+  @bottom-right {
+    padding-right: 17mm;
+    color: #827b70;
+    font: 8pt Arial, sans-serif;
+    content: "Page " counter(page) " / " counter(pages);
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .document {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0 17mm 0;
+    box-shadow: none;
+  }
+
+  .screen-actions {
+    display: none;
+  }
+
+  .document-footer {
+    position: fixed;
+    right: 17mm;
+    bottom: -16mm;
+    left: 17mm;
+  }
+
+  h2,
+  h3,
+  .info-item,
+  .financial-summary,
+  .data-table tr,
+  .signature-area {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

@@ -1,0 +1,8 @@
+.env
+.git
+.venv
+windows
+__pycache__
+*.py[cod]
+media
+staticfiles
