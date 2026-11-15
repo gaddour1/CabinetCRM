@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Corriger une ordonnance{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><a class="back-link" href="{% url 'prescriptions:detail' prescription.pk %}">← Retour à l’ordonnance</a><p class="eyebrow">CORRECTION TRAÇABLE</p><h1>Corriger l’ordonnance</h1><p class="muted">La version validée actuelle sera conservée dans l’historique avant l’enregistrement de cette correction.</p></div>
+</header>
+<form method="post" class="panel patient-form prescription-form" data-medication-suggestions="{% url 'prescriptions:suggestions' %}">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+  <section class="form-section"><h2>Motif de la correction</h2><div class="field wide"><label for="{{ form.correction_reason.id_for_label }}">{{ form.correction_reason.label }} <span class="required">*</span></label>{{ form.correction_reason }}{% for error in form.correction_reason.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div></section>
+  <section class="form-section"><h2>Conseils et recommandations au patient</h2>{{ form.recommendations }}{% for error in form.recommendations.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</section>
+  {% include "prescriptions/partials/medication_formset.html" %}
+  <div class="form-actions">
+    <a class="button secondary" href="{% url 'prescriptions:detail' prescription.pk %}">Annuler</a>
+    <button class="button primary" type="submit" onclick="return confirm('Enregistrer cette correction et conserver la version précédente dans l’historique ?');">Enregistrer</button>
+  </div>
+</form>
+{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/prescriptions.css">{% endblock %}
+{% block page_scripts %}<script src="/static/js/prescriptions.js" defer></script>{% endblock %}

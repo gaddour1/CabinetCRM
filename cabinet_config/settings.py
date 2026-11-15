@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "patients.apps.PatientsConfig",
     "billing.apps.BillingConfig",
     "consultations.apps.ConsultationsConfig",
+    "prescriptions.apps.PrescriptionsConfig",
     "core.apps.CoreConfig",
     "documents.apps.DocumentsConfig",
 ]

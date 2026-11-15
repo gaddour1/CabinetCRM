@@ -1,0 +1,67 @@
+.prescription-draft-notice {
+  padding: 2mm 3mm;
+  border: 1px solid #a12626;
+  color: #a12626;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-align: center;
+}
+
+.prescription-document-medication {
+  margin: 0 0 5mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.prescription-document-medication h3 {
+  margin-bottom: 1mm;
+}
+
+.prescription-document-recommendations {
+  margin-top: 6mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.prescription-signature {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10mm;
+  margin-top: 12mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.prescription-signature .signature-box {
+  min-height: 32mm;
+}
+
+@media screen and (max-width: 760px) {
+  .screen-actions,
+  .document {
+    width: auto;
+    margin-right: 12px;
+    margin-left: 12px;
+  }
+
+  .document {
+    min-height: 0;
+    padding: 24px;
+  }
+
+  .document-header {
+    grid-template-columns: 48px 1fr;
+    gap: 12px;
+  }
+
+  .cabinet-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .document-meta {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}

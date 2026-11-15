@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 
 from accounts.decorators import doctor_required
 from consultations.models import Consultation
+from prescriptions.models import Prescription
 
 from .forms import PatientForm
 from .models import Patient
@@ -106,12 +107,18 @@ def patient_detail(request, patient_id):
     consultations = Consultation.objects.filter(patient=patient).select_related(
         "doctor", "insurance_verified_by"
     )
+    prescriptions = (
+        Prescription.objects.filter(consultation__patient=patient)
+        .select_related("consultation", "prescriber", "validated_by")
+        .order_by("-created_at", "-pk")
+    )
     return render(
         request,
         "patients/patient_detail.html",
         {
             "patient": patient,
             "consultations": consultations,
+            "prescriptions": prescriptions,
         },
     )
 

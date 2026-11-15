@@ -1,0 +1,12 @@
+<section class="form-section prescription-medication-section">
+  <div class="panel-heading"><div><h2>Médicaments prescrits</h2><p class="muted small">Les posologies, fréquences et durées sont saisies et vérifiées par le médecin. Aucune prescription n’est générée à partir du seul nom d’un médicament.</p></div></div>
+  {% if medication_formset.non_form_errors %}<div class="message error">{{ medication_formset.non_form_errors }}</div>{% endif %}
+  {{ medication_formset.management_form }}
+  <div class="medication-rows" data-medication-rows>
+    {% for form in medication_formset %}
+      {% include "prescriptions/partials/medication_row.html" with form=form %}
+    {% endfor %}
+  </div>
+  <template data-empty-medication-form>{% include "prescriptions/partials/medication_row.html" with form=medication_formset.empty_form %}</template>
+  <button class="button secondary" type="button" data-add-medication>+ Ajouter un médicament</button>
+</section>

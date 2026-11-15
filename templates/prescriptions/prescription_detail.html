@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Ordonnance {{ prescription.consultation.reference }}{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><a class="back-link" href="{% url 'consultations:detail' prescription.consultation_id %}">← Retour à la consultation</a><p class="eyebrow">ORDONNANCE MÉDICALE · {{ prescription.consultation.reference }}</p><h1>{{ prescription.consultation.patient.first_name }} {{ prescription.consultation.patient.last_name }}</h1><p class="muted">Prescripteur : {{ prescription.prescriber.get_full_name|default:prescription.prescriber.username }} · Consultation du {{ prescription.consultation.consultation_date|date:"d/m/Y" }}</p></div>
+  <div class="header-actions">
+    <span class="badge rounded-pill {% if prescription.status == 'VALIDATED' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ prescription.get_status_display }}</span>
+    <a class="button secondary" href="{% url 'prescriptions:document' prescription.pk %}">Prévisualiser l’ordonnance</a>
+    {% if prescription.status == 'DRAFT' %}
+      <a class="icon-button" href="{% url 'consultations:update' prescription.consultation_id %}" aria-label="Modifier le brouillon" title="Modifier le brouillon">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+      </a>
+      <form method="post" action="{% url 'prescriptions:validate' prescription.pk %}" onsubmit="return confirm('Valider définitivement cette ordonnance ? Vous ne pourrez plus modifier le texte sans créer une correction tracée.');">{% csrf_token %}<button class="button primary" type="submit">Valider l’ordonnance</button></form>
+    {% else %}
+      <a class="icon-button" href="{% url 'prescriptions:correct' prescription.pk %}" aria-label="Modifier avec une correction tracée" title="Modifier avec une correction tracée">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+      </a>
+    {% endif %}
+  </div>
+</header>
+{% if prescription.validated_at %}<p class="notice">Validée le {{ prescription.validated_at|date:"d/m/Y à H:i" }} par {{ prescription.validated_by.get_full_name|default:prescription.validated_by.username }}. Une correction sera conservée dans l’historique des versions.</p>{% endif %}
+<section class="panel prescription-content">
+  <div class="panel-heading"><h2>Médicaments prescrits</h2></div>
+  {% for medication in prescription.medications.all %}
+    <article class="prescription-medication">
+      <h3>{{ forloop.counter }}. {{ medication.name }}{% if medication.dosage %} — {{ medication.dosage }}{% endif %}</h3>
+      <dl class="detail-list">
+        <div><dt>Forme</dt><dd>{{ medication.get_pharmaceutical_form_display|default:"Non précisée" }}</dd></div>
+        <div><dt>Voie d’administration</dt><dd>{{ medication.get_administration_route_display|default:"Non précisée" }}</dd></div>
+        <div><dt>Posologie</dt><dd>{{ medication.posology|linebreaksbr }}</dd></div>
+        <div><dt>Fréquence</dt><dd>{{ medication.frequency }}</dd></div>
+        <div><dt>Durée</dt><dd>{{ medication.duration }}</dd></div>
+        {% if medication.quantity %}<div><dt>Quantité</dt><dd>{{ medication.quantity }}</dd></div>{% endif %}
+        {% if medication.instructions %}<div class="wide"><dt>Instructions particulières</dt><dd>{{ medication.instructions|linebreaksbr }}</dd></div>{% endif %}
+      </dl>
+    </article>
+  {% empty %}
+    <p class="muted">Aucun médicament dans ce brouillon.</p>
+  {% endfor %}
+  {% if prescription.recommendations %}
+    <div class="prescription-recommendations"><h2>Conseils et recommandations au patient</h2><p>{{ prescription.recommendations|linebreaksbr }}</p></div>
+  {% endif %}
+</section>
+{% if prescription.revisions.all %}
+<section class="panel">
+  <div class="panel-heading"><div><h2>Historique des corrections</h2><p class="muted">Les versions précédentes sont conservées et ne sont pas modifiables.</p></div></div>
+  {% for revision in prescription.revisions.all %}
+    <details class="prescription-revision">
+      <summary>Version {{ revision.version_number }} · corrigée le {{ revision.created_at|date:"d/m/Y à H:i" }} par {{ revision.corrected_by.get_full_name|default:revision.corrected_by.username }}</summary>
+      <p><strong>Motif :</strong> {{ revision.reason }}</p>
+      <p><strong>Recommandations précédentes :</strong> {{ revision.snapshot.recommendations|default:"Aucune" }}</p>
+      <ol>{% for medication in revision.snapshot.medications %}<li><strong>{{ medication.name }}</strong>{% if medication.dosage %} — {{ medication.dosage }}{% endif %}<br>Posologie : {{ medication.posology }} · {{ medication.frequency }} · {{ medication.duration }}{% if medication.instructions %}<br>{{ medication.instructions }}{% endif %}</li>{% endfor %}</ol>
+    </details>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

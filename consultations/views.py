@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Case, F, IntegerField, Q, Value, When
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -7,6 +8,12 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from accounts.decorators import doctor_required
+from prescriptions.forms import (
+    PrescribedMedicationFormSet,
+    PrescriptionForm,
+)
+from prescriptions.models import Prescription
+from prescriptions.services import save_draft_prescription
 
 from .forms import ConsultationForm, MedicalSuggestionForm
 from .models import Consultation, MedicalSuggestion, normalize_suggestion_text
@@ -54,6 +61,26 @@ def _search_date(term):
         except ValueError:
             continue
     return None
+
+
+def _prescription_forms_for_consultation(consultation, doctor, data=None):
+    prescription = None
+    if consultation.pk:
+        prescription = Prescription.objects.filter(consultation=consultation).first()
+    if prescription and prescription.status == Prescription.Status.VALIDATED:
+        return None, None, prescription
+
+    if prescription is None:
+        prescription = Prescription(consultation=consultation, prescriber=doctor)
+    return (
+        PrescriptionForm(data, instance=prescription),
+        PrescribedMedicationFormSet(
+            data,
+            instance=prescription,
+            prefix="medications",
+        ),
+        prescription,
+    )
 
 
 @doctor_required
@@ -124,12 +151,47 @@ def consultation_create(request):
         request.POST or None,
         patient_id=request.GET.get("patient"),
     )
-    if request.method == "POST" and form.is_valid():
+    is_post = request.method == "POST"
+    consultation_is_valid = form.is_valid() if is_post else False
+    prescription_data = (
+        request.POST
+        if is_post and "medications-TOTAL_FORMS" in request.POST
+        else None
+    )
+    prescription_form, medication_formset, prescription = (
+        _prescription_forms_for_consultation(
+            form.instance,
+            request.user,
+            prescription_data,
+        )
+    )
+    prescription_is_valid = True
+    if (
+        prescription_form is not None
+        and medication_formset is not None
+        and prescription_data is not None
+    ):
+        prescription_is_valid = prescription_form.is_valid()
+        prescription_is_valid = medication_formset.is_valid() and prescription_is_valid
+
+    if is_post and consultation_is_valid and prescription_is_valid:
         try:
-            consultation = create_consultation(
-                cleaned_data=form.cleaned_data,
-                doctor=request.user,
-            )
+            with transaction.atomic():
+                consultation = create_consultation(
+                    cleaned_data=form.cleaned_data,
+                    doctor=request.user,
+                )
+                if (
+                    prescription_form is not None
+                    and medication_formset is not None
+                    and prescription_data is not None
+                ):
+                    save_draft_prescription(
+                        consultation=consultation,
+                        prescriber=request.user,
+                        prescription_form=prescription_form,
+                        medication_formset=medication_formset,
+                    )
         except ValidationError as error:
             if hasattr(error, "message_dict"):
                 for field, errors in error.message_dict.items():
@@ -149,7 +211,14 @@ def consultation_create(request):
     return render(
         request,
         "consultations/consultation_form.html",
-        {"form": form, "is_edit": False},
+        {
+            "form": form,
+            "is_edit": False,
+            "prescription_form": prescription_form,
+            "medication_formset": medication_formset,
+            "prescription": prescription,
+            "prescription_suggestions_url": "prescriptions:suggestions",
+        },
     )
 
 
@@ -161,13 +230,48 @@ def consultation_update(request, consultation_id):
         request.POST or None,
         instance=consultation,
     )
-    if request.method == "POST" and form.is_valid():
+    is_post = request.method == "POST"
+    consultation_is_valid = form.is_valid() if is_post else False
+    prescription_data = (
+        request.POST
+        if is_post and "medications-TOTAL_FORMS" in request.POST
+        else None
+    )
+    prescription_form, medication_formset, prescription = (
+        _prescription_forms_for_consultation(
+            consultation,
+            request.user,
+            prescription_data,
+        )
+    )
+    prescription_is_valid = True
+    if (
+        prescription_form is not None
+        and medication_formset is not None
+        and prescription_data is not None
+    ):
+        prescription_is_valid = prescription_form.is_valid()
+        prescription_is_valid = medication_formset.is_valid() and prescription_is_valid
+
+    if is_post and consultation_is_valid and prescription_is_valid:
         try:
-            updated_consultation = update_consultation(
-                consultation_id=consultation.pk,
-                cleaned_data=form.cleaned_data,
-                doctor=request.user,
-            )
+            with transaction.atomic():
+                updated_consultation = update_consultation(
+                    consultation_id=consultation.pk,
+                    cleaned_data=form.cleaned_data,
+                    doctor=request.user,
+                )
+                if (
+                    prescription_form is not None
+                    and medication_formset is not None
+                    and prescription_data is not None
+                ):
+                    save_draft_prescription(
+                        consultation=updated_consultation,
+                        prescriber=request.user,
+                        prescription_form=prescription_form,
+                        medication_formset=medication_formset,
+                    )
         except ValidationError as error:
             if hasattr(error, "message_dict"):
                 for field, errors in error.message_dict.items():
@@ -184,7 +288,15 @@ def consultation_update(request, consultation_id):
     return render(
         request,
         "consultations/consultation_form.html",
-        {"form": form, "consultation": consultation, "is_edit": True},
+        {
+            "form": form,
+            "consultation": consultation,
+            "is_edit": True,
+            "prescription_form": prescription_form,
+            "medication_formset": medication_formset,
+            "prescription": prescription,
+            "prescription_suggestions_url": "prescriptions:suggestions",
+        },
     )
 
 
@@ -192,10 +304,11 @@ def consultation_update(request, consultation_id):
 @require_GET
 def consultation_detail(request, consultation_id):
     consultation = get_object_or_404(_annotated_consultations(), pk=consultation_id)
+    prescription = Prescription.objects.filter(consultation=consultation).first()
     return render(
         request,
         "consultations/consultation_detail.html",
-        {"consultation": consultation},
+        {"consultation": consultation, "prescription": prescription},
     )
 
 

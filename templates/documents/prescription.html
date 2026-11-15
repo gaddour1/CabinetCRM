@@ -1,0 +1,54 @@
+{% extends "documents/base.html" %}
+{% block title %}Ordonnance médicale {{ consultation.reference }}{% endblock %}
+{% block document_type %}Ordonnance médicale{% endblock %}
+{% block document_styles %}<link rel="stylesheet" href="/static/css/documents/prescription.css">{% endblock %}
+{% block content %}
+<h1>ORDONNANCE MÉDICALE</h1>
+<p class="document-subtitle">Référence {{ consultation.reference }} · Prescrite le {{ prescription.validated_at|default:prescription.created_at|date:"d/m/Y" }}</p>
+{% if prescription.status == "DRAFT" %}<p class="prescription-draft-notice">BROUILLON — ordonnance non validée</p>{% endif %}
+
+<section>
+  <h2>Patient et consultation</h2>
+  <dl class="info-grid">
+    <div class="info-item"><dt>Nom et prénom</dt><dd>{{ patient.first_name }} {{ patient.last_name }}</dd></div>
+    <div class="info-item"><dt>Date de naissance</dt><dd>{{ patient.date_of_birth|date:"d/m/Y"|default:"Non renseignée" }}</dd></div>
+    <div class="info-item"><dt>Date de consultation</dt><dd>{{ consultation.consultation_date|date:"d/m/Y" }}</dd></div>
+    <div class="info-item"><dt>Référence</dt><dd>{{ consultation.reference }}</dd></div>
+  </dl>
+</section>
+
+<section class="prescription-document-medications">
+  <h2>Médicaments</h2>
+  {% for medication in prescription.medications.all %}
+  <article class="prescription-document-medication">
+    <h3>{{ forloop.counter }}. {{ medication.name }}{% if medication.dosage %} — {{ medication.dosage }}{% endif %}</h3>
+    <dl class="info-grid">
+      <div class="info-item"><dt>Forme pharmaceutique</dt><dd>{{ medication.get_pharmaceutical_form_display|default:"Non précisée" }}</dd></div>
+      <div class="info-item"><dt>Voie d’administration</dt><dd>{{ medication.get_administration_route_display|default:"Non précisée" }}</dd></div>
+      <div class="info-item"><dt>Posologie</dt><dd>{{ medication.posology|linebreaksbr }}</dd></div>
+      <div class="info-item"><dt>Fréquence</dt><dd>{{ medication.frequency }}</dd></div>
+      <div class="info-item"><dt>Durée</dt><dd>{{ medication.duration }}</dd></div>
+      {% if medication.quantity %}<div class="info-item"><dt>Quantité</dt><dd>{{ medication.quantity }}</dd></div>{% endif %}
+      {% if medication.instructions %}<div class="info-item"><dt>Instructions particulières</dt><dd>{{ medication.instructions|linebreaksbr }}</dd></div>{% endif %}
+    </dl>
+  </article>
+  {% empty %}
+  <p class="empty-note">Aucun médicament n’a été ajouté.</p>
+  {% endfor %}
+</section>
+
+{% if prescription.recommendations %}
+<section class="prescription-document-recommendations">
+  <h2>Conseils et recommandations au patient</h2>
+  <p>{{ prescription.recommendations|linebreaksbr }}</p>
+</section>
+{% endif %}
+
+<section class="prescription-signature">
+  <p>Fait le {{ prescription.validated_at|default:prescription.created_at|date:"d/m/Y" }}</p>
+  <div class="signature-box">
+    <p>{{ prescription.prescriber.get_full_name|default:prescription.prescriber.username }}</p>
+    Signature et cachet du médecin
+  </div>
+</section>
+{% endblock %}

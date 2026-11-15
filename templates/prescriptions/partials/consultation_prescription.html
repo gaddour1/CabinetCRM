@@ -1,0 +1,12 @@
+<section class="form-section prescription-section">
+  <h2>Ordonnance médicale</h2>
+  {% if prescription and prescription.status == 'VALIDATED' %}
+    <p class="muted">Cette ordonnance est validée et protégée contre les modifications directes.</p>
+    <a class="button secondary" href="{% url 'prescriptions:detail' prescription.pk %}">Consulter l’ordonnance et son historique</a>
+  {% elif prescription_form %}
+    {% if prescription.pk %}<p class="muted small">Brouillon enregistré : les modifications seront sauvegardées avec la consultation.</p>{% else %}<p class="muted small">Rédigez une ordonnance facultative. La consultation et son brouillon seront enregistrés ensemble.</p>{% endif %}
+    {% if prescription_form.non_field_errors %}<div class="message error">{{ prescription_form.non_field_errors }}</div>{% endif %}
+    <div class="field wide"><label for="{{ prescription_form.recommendations.id_for_label }}">Conseils et recommandations au patient</label>{{ prescription_form.recommendations }}{% for error in prescription_form.recommendations.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+    {% include "prescriptions/partials/medication_formset.html" %}
+  {% endif %}
+</section>

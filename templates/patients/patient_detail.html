@@ -23,5 +23,13 @@
     </tbody></table></div>
     {% else %}<div class="empty-state"><p>Aucune consultation enregistrée.</p>{% if not patient.is_archived %}<a class="button primary" href="{% url 'consultations:create' %}?patient={{ patient.pk }}">Créer une consultation</a>{% endif %}</div>{% endif %}
   </section>
+  <section class="panel">
+    <div class="panel-heading"><div><h2>Historique des ordonnances</h2><p class="muted">Ordonnances de ce patient, y compris les brouillons et les prescriptions corrigées.</p></div></div>
+    {% if prescriptions %}
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Médecin prescripteur</th><th>Consultation</th><th>État</th><th>Actions</th></tr></thead><tbody>
+      {% for prescription in prescriptions %}<tr><td>{{ prescription.validated_at|default:prescription.created_at|date:"d/m/Y" }}</td><td>{{ prescription.prescriber.get_full_name|default:prescription.prescriber.username }}</td><td><a href="{% url 'consultations:detail' prescription.consultation_id %}">{{ prescription.consultation.reference }}</a></td><td><span class="badge {% if prescription.status == 'VALIDATED' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ prescription.get_status_display }}</span></td><td class="text-nowrap"><a class="button secondary" href="{% url 'prescriptions:detail' prescription.pk %}">Consulter</a><a class="button secondary" href="{% url 'prescriptions:document' prescription.pk %}">Imprimer / PDF</a></td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<div class="empty-state"><p>Aucune ordonnance enregistrée.</p></div>{% endif %}
+  </section>
 </div>
 {% endblock %}

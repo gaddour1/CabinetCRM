@@ -5,7 +5,7 @@
   <div><p class="eyebrow">SUIVI DU CABINET</p><h1>{% if is_edit %}Modifier la consultation{% else %}Nouvelle consultation{% endif %}</h1><p class="muted">{% if is_edit %}Modifiez les informations de cette consultation.{% else %}Le prix de la consultation est facultatif.{% endif %}</p></div>
   <div class="header-actions"><a class="button secondary" href="{% url 'consultations:suggestions' %}">Gérer les suggestions</a><a class="button secondary" href="{% if consultation %}{% url 'consultations:detail' consultation.pk %}{% else %}{% url 'consultations:list' %}{% endif %}">Annuler</a></div>
 </header>
-<form method="post" class="panel patient-form consultation-form" data-suggestions-url="{% url 'consultations:suggestions_api' %}" data-use-url-pattern="{% url 'consultations:suggestions_use' suggestion_id=0 %}">
+<form method="post" class="panel patient-form consultation-form" data-suggestions-url="{% url 'consultations:suggestions_api' %}" data-use-url-pattern="{% url 'consultations:suggestions_use' suggestion_id=0 %}" data-medication-suggestions="{% url 'prescriptions:suggestions' %}">
   {% csrf_token %}
   {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
   <section class="form-section"><h2>Consultation</h2>{% if is_edit %}<p class="muted small">Le patient de cette consultation ne peut pas être modifié.</p>{% endif %}<div class="form-grid">
@@ -67,7 +67,14 @@
     </div>
     {% endwith %}
   </div></section>
-  <div class="form-actions"><a class="button secondary" href="{% if consultation %}{% url 'consultations:detail' consultation.pk %}{% else %}{% url 'consultations:list' %}{% endif %}">Annuler</a><button class="button primary" type="submit">{% if is_edit %}Enregistrer les modifications{% else %}Créer la consultation{% endif %}</button></div>
+  {% include "prescriptions/partials/consultation_prescription.html" %}
+  <div class="form-actions">
+    <a class="button secondary" href="{% if consultation %}{% url 'consultations:detail' consultation.pk %}{% else %}{% url 'consultations:list' %}{% endif %}">Annuler</a>
+    <button class="button primary" type="submit">
+      {% if prescription and prescription.pk and prescription.status == 'DRAFT' %}Enregistrer en brouillon{% else %}Enregistrer{% endif %}
+    </button>
+  </div>
 </form>
 {% endblock %}
-{% block page_scripts %}<script src="/static/js/medical-autocomplete.js" defer></script>{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/prescriptions.css">{% endblock %}
+{% block page_scripts %}<script src="/static/js/medical-autocomplete.js" defer></script><script src="/static/js/prescriptions.js" defer></script>{% endblock %}

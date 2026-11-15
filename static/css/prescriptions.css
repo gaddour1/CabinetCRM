@@ -1,0 +1,172 @@
+.prescription-section,
+.prescription-medication-section {
+  margin-top: 1.5rem;
+}
+
+.medication-card {
+  position: relative;
+  min-width: 0;
+  margin: 1rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.medication-card[hidden] {
+  display: none;
+}
+
+.medication-card-title {
+  padding: 0 0.5rem;
+  color: var(--primary, #7a4e0f);
+  font-weight: 700;
+}
+
+.medication-card .field {
+  position: relative;
+  min-width: 0;
+}
+
+.medication-card .wide {
+  grid-column: 1 / -1;
+}
+
+.medication-card-actions,
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.medication-card-actions {
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+
+.medication-card-actions .icon-button {
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  padding: 9px;
+}
+
+.medication-card-actions .icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.header-actions > .icon-button {
+  width: 38px;
+  height: 38px;
+}
+
+.header-actions .button {
+  min-height: 38px;
+}
+
+.danger-outline {
+  border-color: #e5a4a4;
+  color: #a12626;
+}
+
+.choice-field.medication-library-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.medication-suggestions {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% - 0.1rem);
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  border: 1px solid #e3d8c6;
+  border-radius: 0 0 8px 8px;
+  background: #fff;
+  box-shadow: 0 10px 24px #2c20151c;
+}
+
+.medication-suggestions[hidden] {
+  display: none;
+}
+
+.medication-suggestion {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 0;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.medication-suggestion:hover,
+.medication-suggestion:focus {
+  background: #f7f2e8;
+}
+
+.medication-suggestion-error {
+  display: block;
+  padding: 0.7rem 0.85rem;
+  color: #a12626;
+}
+
+.prescription-medication,
+.prescription-revision {
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee8dc;
+}
+
+.prescription-medication h3 {
+  margin-top: 0;
+}
+
+.prescription-recommendations {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: #faf7f0;
+}
+
+.prescription-revision summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.prescription-form .form-section {
+  margin-bottom: 1.5rem;
+}
+
+.prescription-form textarea,
+.prescription-form input,
+.prescription-form select {
+  max-width: 100%;
+}
+
+.prescription-content .detail-list {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .medication-card {
+    padding: 0.85rem;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .button {
+    width: 100%;
+  }
+}

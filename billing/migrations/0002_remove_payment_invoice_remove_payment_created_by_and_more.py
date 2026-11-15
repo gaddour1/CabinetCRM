@@ -11,18 +11,23 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name="payment",
-            name="invoice",
-        ),
-        migrations.RemoveField(
-            model_name="payment",
-            name="created_by",
-        ),
-        migrations.DeleteModel(
-            name="Invoice",
-        ),
-        migrations.DeleteModel(
-            name="Payment",
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.RemoveField(
+                    model_name="payment",
+                    name="invoice",
+                ),
+                migrations.RemoveField(
+                    model_name="payment",
+                    name="created_by",
+                ),
+                migrations.DeleteModel(
+                    name="Invoice",
+                ),
+                migrations.DeleteModel(
+                    name="Payment",
+                ),
+            ],
         ),
     ]

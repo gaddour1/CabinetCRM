@@ -5,6 +5,7 @@ $distributionRoot = Join-Path $PSScriptRoot "distribution"
 $payloadRoot = Join-Path $distributionRoot "payload"
 $launcherProject = Join-Path $PSScriptRoot "launcher\Cabinet.csproj"
 $setupScript = Join-Path $PSScriptRoot "installer\Cabinet.iss"
+$appVersion = "2.0.0"
 $dotnetExe = Join-Path $env:LOCALAPPDATA "dotnet\dotnet.exe"
 if (-not (Test-Path -LiteralPath $dotnetExe)) {
     $dotnetCommand = Get-Command "dotnet.exe" -ErrorAction SilentlyContinue
@@ -40,6 +41,7 @@ $applicationDirectories = @(
     "core",
     "documents",
     "patients",
+    "prescriptions",
     "static",
     "templates"
 )
@@ -54,6 +56,7 @@ $applicationFiles = @(
     "Dockerfile",
     "docker-entrypoint.sh",
     "compose.yaml",
+    ".env.example",
     "requirements.txt",
     "manage.py"
 )
@@ -67,8 +70,35 @@ Get-ChildItem -LiteralPath $payloadRoot -Directory -Filter "__pycache__" -Recurs
     Remove-Item -Recurse -Force
 Get-ChildItem -LiteralPath $payloadRoot -File -Filter "*.pyc" -Recurse |
     Remove-Item -Force
-if (Get-ChildItem -LiteralPath $payloadRoot -Force -Filter ".env" -Recurse) {
-    throw "Le paquet ne doit jamais contenir un fichier .env."
+$unexpectedEnvironmentFiles = Get-ChildItem -LiteralPath $payloadRoot -Force -File -Recurse |
+    Where-Object {
+        $_.Name -match '^\.env($|\.)' -and $_.Name -ne ".env.example"
+    }
+if ($unexpectedEnvironmentFiles) {
+    throw "Le paquet contient un fichier de configuration secret : $($unexpectedEnvironmentFiles[0].FullName)"
+}
+$forbiddenFiles = Get-ChildItem -LiteralPath $payloadRoot -File -Recurse |
+    Where-Object {
+        $_.Name -match '\.(sqlite3?|db|dump|pgdump|backup|sql)$' -or
+        $_.Name -match '(^|[-_.])(backup|sauvegarde)([-_.]|$)' -or
+        $_.Name -match '\.sql\.gz$'
+    }
+if ($forbiddenFiles) {
+    throw "Le paquet contient un fichier de base ou de sauvegarde : $($forbiddenFiles[0].FullName)"
+}
+$requiredFiles = @(
+    "Cabinet.exe",
+    "Dockerfile",
+    "docker-entrypoint.sh",
+    "compose.yaml",
+    ".env.example",
+    "requirements.txt",
+    "manage.py"
+)
+foreach ($file in $requiredFiles) {
+    if (-not (Test-Path -LiteralPath (Join-Path $payloadRoot $file) -PathType Leaf)) {
+        throw "Le paquet ne contient pas le fichier obligatoire $file."
+    }
 }
 
 $compiler = Get-Command "iscc.exe" -ErrorAction SilentlyContinue
@@ -89,14 +119,38 @@ if (-not $compilerPath) {
     exit 0
 }
 
-$setupOutput = Join-Path $distributionRoot "Cabinet-Setup-1.0.0.exe"
-if (Test-Path -LiteralPath $setupOutput) {
-    Remove-Item -LiteralPath $setupOutput -Force
-}
+$setupOutput = Join-Path $distributionRoot "Cabinet-Setup-$appVersion.exe"
+$stagingRoot = Join-Path $distributionRoot ("staging-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Force -Path $stagingRoot | Out-Null
+try {
+    & $compilerPath "/O$stagingRoot" $setupScript
+    if ($LASTEXITCODE -ne 0) {
+        throw "La compilation de Cabinet-Setup.exe a échoué."
+    }
 
-& $compilerPath $setupScript
-if ($LASTEXITCODE -ne 0) {
-    throw "La compilation de Cabinet-Setup.exe a échoué."
+    $stagedInstaller = Join-Path $stagingRoot "Cabinet-Setup-$appVersion.exe"
+    if (-not (Test-Path -LiteralPath $stagedInstaller -PathType Leaf) -or
+        (Get-Item -LiteralPath $stagedInstaller).Length -eq 0) {
+        throw "La compilation Inno Setup n’a pas produit un installateur valide."
+    }
+    if (Test-Path -LiteralPath $setupOutput) {
+        $previousInstaller = Join-Path $stagingRoot "previous-installer.exe"
+        Move-Item -LiteralPath $setupOutput -Destination $previousInstaller
+        try {
+            [System.IO.File]::Move($stagedInstaller, $setupOutput)
+        }
+        catch {
+            Move-Item -LiteralPath $previousInstaller -Destination $setupOutput
+            throw
+        }
+    } else {
+        [System.IO.File]::Move($stagedInstaller, $setupOutput)
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $stagingRoot) {
+        Remove-Item -LiteralPath $stagingRoot -Recurse -Force
+    }
 }
 
 Write-Output "Installateur créé dans $distributionRoot."

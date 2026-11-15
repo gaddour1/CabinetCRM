@@ -1,0 +1,17 @@
+<fieldset class="medication-card" data-medication-row>
+  <legend class="medication-card-title">Médicament</legend>
+  {{ form.id }}{{ form.ORDER }}{{ form.DELETE }}
+  {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="form-grid">{% include "prescriptions/partials/medication_fields.html" with form=form %}</div>
+  <div class="medication-card-actions">
+    <button class="icon-button" type="button" data-move-medication="up" aria-label="Monter le médicament" title="Monter">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg>
+    </button>
+    <button class="icon-button" type="button" data-move-medication="down" aria-label="Descendre le médicament" title="Descendre">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></svg>
+    </button>
+    <button class="icon-button danger" type="button" data-remove-medication aria-label="Supprimer le médicament" title="Supprimer">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>
+    </button>
+  </div>
+</fieldset>
