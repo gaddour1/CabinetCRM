@@ -402,23 +402,40 @@ internal sealed class StartupForm : Form
 
         Hide();
         using InitialDoctorDialog dialog = new();
-        if (dialog.ShowDialog(this) != DialogResult.OK)
+        while (dialog.ShowDialog(this) == DialogResult.OK)
         {
-            throw new OperationCanceledException();
+            try
+            {
+                SetStatus("Création du compte médecin...");
+                string json = JsonSerializer.Serialize(dialog.Credentials);
+                await RunDockerAsync(
+                    docker,
+                    [
+                        "compose", "exec", "-T", "web", "python", "manage.py",
+                        "initialize_clinic_doctor",
+                    ],
+                    TimeSpan.FromMinutes(1),
+                    cancellationToken,
+                    json);
+
+                Show();
+                return;
+            }
+            catch (Exception error) when (
+                error is InvalidOperationException or TimeoutException or IOException)
+            {
+                Show();
+                MessageBox.Show(
+                    this,
+                    error.Message,
+                    "Création du compte médecin impossible",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                Hide();
+            }
         }
 
-        SetStatus("Création du compte médecin...");
-        string json = JsonSerializer.Serialize(dialog.Credentials);
-        await RunDockerAsync(
-            docker,
-            [
-                "compose", "exec", "-T", "web", "python", "manage.py",
-                "initialize_clinic_doctor",
-            ],
-            TimeSpan.FromMinutes(1),
-            cancellationToken,
-            json);
-        Show();
+        throw new OperationCanceledException();
     }
 
     private void OpenEdge()
@@ -624,7 +641,9 @@ internal sealed class InitialDoctorDialog : Form
 
         Label note = new()
         {
-            Text = "Ce compte est créé une seule fois sur cette installation.",
+            Text = "Mot de passe : 8 caractères minimum. Évitez les mots courants, "
+                + "les mots de passe uniquement numériques et ceux contenant vos "
+                + "informations personnelles.",
             Dock = DockStyle.Fill,
             ForeColor = Color.DimGray,
             TextAlign = ContentAlignment.MiddleLeft,
@@ -688,7 +707,6 @@ internal sealed class InitialDoctorDialog : Form
         }
 
         DialogResult = DialogResult.OK;
-        Close();
     }
 
     private void ShowValidationError(string message)
