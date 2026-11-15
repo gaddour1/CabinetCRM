@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <title>{% block title %}Cabinet médical{% endblock %} · Cabinet</title>
   {% block bootstrap_styles %}{% endblock %}
-  <link rel="stylesheet" href="/static/css/app.css?v=6">
+  <link rel="stylesheet" href="/static/css/app.css?v=7">
   {% block page_styles %}{% endblock %}
 </head>
 <body>
@@ -20,7 +20,6 @@
       <a class="nav-link {% if request.resolver_match.app_name == 'patients' %}active{% endif %}" href="{% url 'patients:list' %}"><span>♡</span> Patients</a>
       <a class="nav-link {% if request.resolver_match.app_name == 'consultations' %}active{% endif %}" href="{% url 'consultations:list' %}"><span>◷</span> Consultations</a>
       <a class="nav-link {% if request.resolver_match.url_name == 'suggestions' %}active{% endif %}" href="{% url 'consultations:suggestions' %}"><span>✦</span> Suggestions</a>
-      <a class="nav-link {% if request.resolver_match.app_name == 'billing' %}active{% endif %}" href="{% url 'billing:invoice_list' %}"><span>▤</span> Facturation</a>
     </nav>
     <div class="sidebar-bottom">
       <div class="user-chip"><span class="avatar">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</span><span><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><small>{{ request.user.get_role_display }}</small></span></div>

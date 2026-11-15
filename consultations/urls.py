@@ -33,6 +33,11 @@ urlpatterns = [
         views.medical_suggestion_toggle_archive,
         name="suggestion_archive",
     ),
+    path(
+        "<int:consultation_id>/supprimer/",
+        views.consultation_delete,
+        name="delete",
+    ),
     path("<int:consultation_id>/modifier/", views.consultation_update, name="update"),
     path("<int:consultation_id>/", views.consultation_detail, name="detail"),
 ]

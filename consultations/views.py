@@ -1,18 +1,6 @@
-from decimal import Decimal
-
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import (
-    Case,
-    DecimalField,
-    F,
-    IntegerField,
-    Q,
-    Sum,
-    Value,
-    When,
-)
-from django.db.models.functions import Coalesce
+from django.db.models import Case, F, IntegerField, Q, Value, When
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -29,7 +17,6 @@ CONSULTATION_SORTS = {
     "date": ("consultation_date", "created_at"),
     "patient": ("patient__last_name", "patient__first_name"),
     "reason": ("reason",),
-    "payment": ("payment_rank",),
     "insurance": ("insurance_rank",),
     "reference": ("reference",),
 }
@@ -39,23 +26,8 @@ def _annotated_consultations():
     return Consultation.objects.select_related(
         "patient",
         "doctor",
-        "invoice",
         "insurance_verified_by",
     ).annotate(
-        paid_total=Coalesce(
-            Sum("invoice__payments__amount"),
-            Value(
-                Decimal("0.000"),
-                output_field=DecimalField(max_digits=10, decimal_places=3),
-            ),
-        ),
-    ).annotate(
-        payment_rank=Case(
-            When(paid_total__gte=F("invoice__consultation_fee"), then=Value(2)),
-            When(paid_total__gt=Value(0), then=Value(1)),
-            default=Value(0),
-            output_field=IntegerField(),
-        ),
         insurance_rank=Case(
             When(has_insurance=False, then=Value(0)),
             When(
@@ -125,7 +97,6 @@ def consultation_list(request):
             ("date", "Date de consultation"),
             ("patient", "Patient (A–Z)"),
             ("reason", "Motif"),
-            ("payment", "Statut du paiement"),
             ("insurance", "Statut de l’assurance"),
             ("reference", "Référence"),
         ),
@@ -169,7 +140,7 @@ def consultation_create(request):
         else:
             messages.success(
                 request,
-                f"La consultation {consultation.reference} et sa facture ont été créées.",
+                f"La consultation {consultation.reference} a été créée.",
             )
             return redirect(
                 "consultations:detail",
@@ -185,10 +156,7 @@ def consultation_create(request):
 @doctor_required
 @require_http_methods(["GET", "POST"])
 def consultation_update(request, consultation_id):
-    consultation = get_object_or_404(
-        Consultation.objects.select_related("invoice"),
-        pk=consultation_id,
-    )
+    consultation = get_object_or_404(Consultation, pk=consultation_id)
     form = ConsultationForm(
         request.POST or None,
         instance=consultation,
@@ -223,15 +191,25 @@ def consultation_update(request, consultation_id):
 @doctor_required
 @require_GET
 def consultation_detail(request, consultation_id):
-    consultation = get_object_or_404(
-        _annotated_consultations().prefetch_related("invoice__payments"),
-        pk=consultation_id,
-    )
+    consultation = get_object_or_404(_annotated_consultations(), pk=consultation_id)
     return render(
         request,
         "consultations/consultation_detail.html",
         {"consultation": consultation},
     )
+
+
+@doctor_required
+@require_POST
+def consultation_delete(request, consultation_id):
+    consultation = get_object_or_404(
+        Consultation.objects.select_related("patient"),
+        pk=consultation_id,
+    )
+    reference = consultation.reference
+    consultation.delete()
+    messages.success(request, f"La consultation {reference} a été supprimée.")
+    return redirect("consultations:list")
 
 
 @doctor_required

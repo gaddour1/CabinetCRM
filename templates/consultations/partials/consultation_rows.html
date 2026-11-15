@@ -1,11 +1,11 @@
 {% for consultation in consultations %}
 <tr>
-  <td><strong>{{ consultation.reference }}</strong><small class="table-sub"><a class="text-link" href="{% url 'patients:detail' consultation.patient_id %}">{{ consultation.patient.first_name }} {{ consultation.patient.last_name }}</a></small></td>
+  <td><strong><a class="text-link" href="{% url 'consultations:detail' consultation.pk %}">{{ consultation.reference }}</a></strong><small class="table-sub"><a class="text-link" href="{% url 'patients:detail' consultation.patient_id %}">{{ consultation.patient.first_name }} {{ consultation.patient.last_name }}</a></small></td>
   <td class="text-nowrap">{{ consultation.consultation_date|date:"d/m/Y" }}</td>
   <td>{{ consultation.reason|linebreaksbr }}</td>
-  <td><span class="badge rounded-pill {% if consultation.payment_status == 'PAID' %}text-bg-success{% elif consultation.payment_status == 'PARTIAL' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ consultation.payment_status_display }}</span><small class="table-sub text-nowrap">{{ consultation.amount_paid|floatformat:3 }} / {{ consultation.consultation_fee|floatformat:3 }} TND</small></td>
+  <td class="text-nowrap">{% if consultation.consultation_fee != None %}{{ consultation.consultation_fee|floatformat:3 }} TND{% else %}—{% endif %}</td>
   <td><span class="badge rounded-pill {% if consultation.insurance_status == 'COMPLETED' %}text-bg-success{% elif consultation.insurance_status == 'INCOMPLETE' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ consultation.insurance_status_display }}</span></td>
-  <td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="{% url 'consultations:detail' consultation.pk %}">Consulter <span aria-hidden="true">→</span></a></td>
+  <td class="text-nowrap"><a class="icon-button" href="{% url 'consultations:update' consultation.pk %}" aria-label="Modifier la consultation {{ consultation.reference }}" title="Modifier"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></a><form class="inline-form" method="post" action="{% url 'consultations:delete' consultation.pk %}" onsubmit="return confirm('Supprimer définitivement cette consultation ?');">{% csrf_token %}<button class="icon-button danger" type="submit" aria-label="Supprimer la consultation {{ consultation.reference }}" title="Supprimer"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg></button></form></td>
 </tr>
 {% empty %}
 {% endfor %}

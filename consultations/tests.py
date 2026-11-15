@@ -6,8 +6,6 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
-from billing.models import Invoice, Payment
-from billing.services import record_payment
 from patients.models import Patient
 
 from .forms import ConsultationForm
@@ -42,16 +40,9 @@ class ConsultationWorkflowTests(TestCase):
             "insurance_comment": "",
         }
         values.update(overrides)
-        invoice = Invoice.objects.create(
-            patient=self.patient,
-            consultation_date=values["consultation_date"],
-            consultation_fee=Decimal("100.000"),
-            created_by=self.doctor,
-        )
         return Consultation.objects.create(
             **values,
             doctor=self.doctor,
-            invoice=invoice,
         )
 
     def test_consultation_list_searches_birth_date_and_returns_sorted_partial_rows(self):
@@ -73,30 +64,7 @@ class ConsultationWorkflowTests(TestCase):
         self.assertEqual(response.json()["count"], 1)
         self.assertIn(consultation.reference, response.json()["rows"])
 
-    def test_consultation_list_sorts_paid_before_unpaid(self):
-        unpaid = self.create_consultation()
-        paid = self.create_consultation()
-        self.record_payment(paid, "100.000")
-
-        response = self.client.get(
-            reverse("consultations:list"),
-            {"sort": "payment", "direction": "desc", "partial": "1"},
-        )
-
-        rows = response.json()["rows"]
-        self.assertLess(rows.index(paid.reference), rows.index(unpaid.reference))
-
-    def record_payment(self, consultation, amount):
-        return record_payment(
-            invoice_id=consultation.invoice_id,
-            amount=Decimal(amount),
-            method=Payment.Method.CASH,
-            paid_at=timezone.now(),
-            created_by=self.doctor,
-        )
-
-    def test_new_consultation_creates_its_invoice_atomically(self):
-        before = Invoice.objects.count()
+    def test_new_consultation_saves_optional_fee(self):
         response = self.client.post(
             reverse("consultations:create"),
             {
@@ -130,8 +98,6 @@ class ConsultationWorkflowTests(TestCase):
             response,
             reverse("consultations:detail", args=[consultation.pk]),
         )
-        self.assertEqual(Invoice.objects.count(), before + 1)
-        self.assertEqual(consultation.invoice.patient, self.patient)
         self.assertEqual(consultation.consultation_fee, Decimal("72.500"))
         self.assertEqual(consultation.doctor, self.doctor)
         self.assertEqual(consultation.blood_pressure, "120/80")
@@ -146,6 +112,25 @@ class ConsultationWorkflowTests(TestCase):
         self.assertEqual(consultation.imaging_exams, "Scanner fictif")
         self.assertEqual(consultation.complementary_exams, "Bilan sanguin fictif")
         self.assertEqual(consultation.destination, "Orientation personnalisée")
+
+    def test_new_consultation_can_be_created_without_a_fee(self):
+        response = self.client.post(
+            reverse("consultations:create"),
+            {
+                "patient": self.patient.pk,
+                "consultation_date": timezone.localdate().isoformat(),
+                "reason": "Consultation sans prix",
+                "has_insurance": "false",
+                "insurance_file_filled": "false",
+            },
+        )
+
+        consultation = Consultation.objects.get()
+        self.assertRedirects(
+            response,
+            reverse("consultations:detail", args=[consultation.pk]),
+        )
+        self.assertIsNone(consultation.consultation_fee)
 
     def test_create_consultation_saves_unique_tags_as_separate_values(self):
         response = self.client.post(
@@ -238,7 +223,7 @@ class ConsultationWorkflowTests(TestCase):
         self.assertEqual(consultation.medical_act, "Injection\nPansement")
         self.assertEqual(consultation.biological_exams, "NFS\nGlycémie")
 
-    def test_clinical_sections_appear_before_insurance_and_billing(self):
+    def test_consultation_form_has_optional_fee_and_clinical_sections(self):
         response = self.client.get(reverse("consultations:create"))
         content = response.content.decode()
 
@@ -250,10 +235,8 @@ class ConsultationWorkflowTests(TestCase):
             content.index("Acte médical, conduite et examens"),
             content.index("Informations d’assurance"),
         )
-        self.assertLess(
-            content.index("<h2>Informations d’assurance</h2>"),
-            content.index("<h2>Facturation</h2>"),
-        )
+        self.assertContains(response, "<h2>Prix de consultation (facultatif)</h2>")
+        self.assertContains(response, "Vous pouvez laisser ce champ vide.")
         self.assertContains(response, "Scanner, échographie")
         self.assertContains(response, 'data-suggestion-category="reason"')
         self.assertContains(response, 'data-suggestion-category="imaging_exam"')
@@ -540,32 +523,7 @@ class ConsultationWorkflowTests(TestCase):
             Consultation.InsuranceStatus.COMPLETED,
         )
 
-    def test_payment_status_is_derived_from_recorded_transactions(self):
-        consultation = self.create_consultation()
-        self.assertEqual(
-            consultation.payment_status,
-            Consultation.PaymentStatus.UNPAID,
-        )
-
-        self.record_payment(consultation, "35.000")
-        consultation.refresh_from_db()
-        self.assertEqual(consultation.amount_paid, Decimal("35.000"))
-        self.assertEqual(consultation.remaining_amount, Decimal("65.000"))
-        self.assertEqual(
-            consultation.payment_status,
-            Consultation.PaymentStatus.PARTIAL,
-        )
-
-        self.record_payment(consultation, "65.000")
-        consultation.refresh_from_db()
-        self.assertEqual(consultation.amount_paid, Decimal("100.000"))
-        self.assertEqual(consultation.remaining_amount, Decimal("0.000"))
-        self.assertEqual(
-            consultation.payment_status,
-            Consultation.PaymentStatus.PAID,
-        )
-
-    def test_consultation_history_shows_payment_and_insurance_badges(self):
+    def test_consultation_history_shows_price_and_insurance_badges(self):
         consultation = self.create_consultation(has_insurance=True)
 
         response = self.client.get(
@@ -573,11 +531,12 @@ class ConsultationWorkflowTests(TestCase):
         )
 
         self.assertContains(response, consultation.reference)
-        self.assertContains(response, 'status-payment-unpaid')
+        self.assertContains(response, "—")
         self.assertContains(response, 'status-insurance-incomplete')
 
-    def test_consultation_detail_shows_transactions_and_insurance(self):
+    def test_consultation_detail_shows_fee_and_insurance(self):
         consultation = self.create_consultation(
+            consultation_fee=Decimal("100.000"),
             has_insurance=True,
             insurance_file_filled=True,
             insurance_type=Consultation.InsuranceType.CNAM,
@@ -588,15 +547,11 @@ class ConsultationWorkflowTests(TestCase):
             complementary_exams="Scanner fictif",
             destination="Urgence",
         )
-        self.record_payment(consultation, "25.000")
-
         response = self.client.get(
             reverse("consultations:detail", args=[consultation.pk])
         )
 
-        self.assertContains(response, "25,000 TND")
-        self.assertContains(response, "75,000 TND")
-        self.assertContains(response, "Espèces")
+        self.assertContains(response, "100,000 TND")
         self.assertContains(response, "Organisme fictif")
         self.assertContains(response, "FICTIF-789")
         self.assertContains(response, "Non remplie")
@@ -605,20 +560,33 @@ class ConsultationWorkflowTests(TestCase):
         self.assertContains(response, "Scanner fictif")
         self.assertContains(response, "Urgence")
 
-    def test_legacy_invoice_is_preserved_and_not_fabricated_as_consultation(self):
-        invoice = Invoice.objects.create(
-            patient=self.patient,
-            consultation_fee=Decimal("60.000"),
-            created_by=self.doctor,
-        )
+    def test_consultation_table_has_edit_and_confirmed_delete_actions(self):
+        consultation = self.create_consultation()
 
-        self.assertEqual(Consultation.objects.count(), 0)
-        self.assertEqual(self.patient.invoices.get(), invoice)
-        response = self.client.get(
-            reverse("patients:detail", args=[self.patient.pk])
+        response = self.client.get(reverse("consultations:list"))
+
+        self.assertContains(
+            response,
+            reverse("consultations:update", args=[consultation.pk]),
         )
-        self.assertContains(response, invoice.number)
-        self.assertContains(response, "Aucune consultation enregistrée")
+        self.assertContains(
+            response,
+            reverse("consultations:delete", args=[consultation.pk]),
+        )
+        self.assertContains(response, "Supprimer définitivement cette consultation")
+
+    def test_consultation_delete_requires_post_and_removes_only_consultation(self):
+        consultation = self.create_consultation()
+        delete_url = reverse("consultations:delete", args=[consultation.pk])
+
+        response = self.client.get(delete_url)
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(Consultation.objects.filter(pk=consultation.pk).exists())
+
+        response = self.client.post(delete_url)
+        self.assertRedirects(response, reverse("consultations:list"))
+        self.assertFalse(Consultation.objects.filter(pk=consultation.pk).exists())
+        self.assertTrue(Patient.objects.filter(pk=self.patient.pk).exists())
 
     def test_consultation_details_are_read_only(self):
         consultation = self.create_consultation()
@@ -632,7 +600,7 @@ class ConsultationWorkflowTests(TestCase):
         consultation.refresh_from_db()
         self.assertEqual(consultation.reason, "Motif fictif de test")
 
-    def test_edit_updates_consultation_and_invoice_without_losing_payments(self):
+    def test_edit_updates_consultation_and_optional_fee(self):
         consultation = self.create_consultation(
             has_insurance=True,
             insurance_file_filled=True,
@@ -642,7 +610,6 @@ class ConsultationWorkflowTests(TestCase):
             insurance_verified_by=self.doctor,
             insurance_verified_at=timezone.now() - timedelta(days=1),
         )
-        payment = self.record_payment(consultation, "25.000")
         new_date = timezone.localdate() - timedelta(days=1)
 
         response = self.client.post(
@@ -679,7 +646,6 @@ class ConsultationWorkflowTests(TestCase):
             reverse("consultations:detail", args=[consultation.pk]),
         )
         consultation.refresh_from_db()
-        consultation.invoice.refresh_from_db()
         self.assertEqual(consultation.reason, "Motif corrigé")
         self.assertEqual(consultation.consultation_date, new_date)
         self.assertEqual(consultation.blood_pressure, "130/85")
@@ -695,8 +661,6 @@ class ConsultationWorkflowTests(TestCase):
         self.assertEqual(consultation.complementary_exams, "Échographie")
         self.assertEqual(consultation.destination, "Orientation personnalisée")
         self.assertEqual(consultation.consultation_fee, Decimal("120.000"))
-        self.assertEqual(consultation.amount_paid, Decimal("25.000"))
-        self.assertEqual(consultation.invoice.payments.get(), payment)
         self.assertEqual(consultation.insurance_status, Consultation.InsuranceStatus.COMPLETED)
         self.assertEqual(consultation.insurance_verified_by, self.doctor)
 
@@ -826,30 +790,6 @@ class ConsultationWorkflowTests(TestCase):
             response.context["form"]["insurance_file_filled"].value(),
             None,
         )
-
-    def test_edit_rejects_price_lower_than_recorded_payments(self):
-        consultation = self.create_consultation()
-        payment = self.record_payment(consultation, "60.000")
-
-        response = self.client.post(
-            reverse("consultations:update", args=[consultation.pk]),
-            {
-                "patient": self.patient.pk,
-                "consultation_date": consultation.consultation_date.isoformat(),
-                "reason": "Motif modifié",
-                "consultation_fee": "50.000",
-                "has_insurance": "false",
-                "insurance_file_filled": "false",
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "ne peut pas être inférieur")
-        consultation.refresh_from_db()
-        consultation.invoice.refresh_from_db()
-        self.assertEqual(consultation.reason, "Motif fictif de test")
-        self.assertEqual(consultation.consultation_fee, Decimal("100.000"))
-        self.assertEqual(consultation.invoice.payments.get(), payment)
 
     def test_editing_insurance_information_clears_previous_verification(self):
         consultation = self.create_consultation(
@@ -1015,7 +955,7 @@ class ConsultationWorkflowTests(TestCase):
             f"{reverse('core:login')}?next={reverse('consultations:list')}",
         )
 
-    def test_payment_and_insurance_statuses_are_independent(self):
+    def test_insurance_status_is_derived_from_verified_information(self):
         consultation = self.create_consultation(
             has_insurance=True,
             insurance_file_filled=True,
@@ -1026,23 +966,13 @@ class ConsultationWorkflowTests(TestCase):
             insurance_verified_at=timezone.now(),
         )
         self.assertEqual(
-            consultation.payment_status,
-            Consultation.PaymentStatus.UNPAID,
-        )
-        self.assertEqual(
             consultation.insurance_status,
             Consultation.InsuranceStatus.COMPLETED,
         )
 
-        self.record_payment(consultation, "100.000")
-        consultation.refresh_from_db()
         consultation.insurance_file_filled = False
         consultation.insurance_verified_by = None
         consultation.insurance_verified_at = None
-        self.assertEqual(
-            consultation.payment_status,
-            Consultation.PaymentStatus.PAID,
-        )
         self.assertEqual(
             consultation.insurance_status,
             Consultation.InsuranceStatus.INCOMPLETE,

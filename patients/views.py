@@ -1,9 +1,7 @@
-from decimal import Decimal
 from datetime import datetime
 
 from django.contrib import messages
-from django.db.models import DecimalField, Q, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -105,34 +103,14 @@ def patient_create(request):
 @doctor_required
 def patient_detail(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
-    invoices = patient.invoices.annotate(
-        paid_total=Coalesce(
-            Sum("payments__amount"),
-            Value(
-                Decimal("0.000"),
-                output_field=DecimalField(max_digits=10, decimal_places=3),
-            ),
-        )
-    )
     consultations = Consultation.objects.filter(patient=patient).select_related(
-        "doctor",
-        "invoice",
-        "insurance_verified_by",
-    ).annotate(
-        paid_total=Coalesce(
-            Sum("invoice__payments__amount"),
-            Value(
-                Decimal("0.000"),
-                output_field=DecimalField(max_digits=10, decimal_places=3),
-            ),
-        )
+        "doctor", "insurance_verified_by"
     )
     return render(
         request,
         "patients/patient_detail.html",
         {
             "patient": patient,
-            "invoices": invoices,
             "consultations": consultations,
         },
     )
@@ -171,3 +149,17 @@ def patient_restore(request, patient_id):
     patient.restore()
     messages.success(request, "Le dossier a été restauré.")
     return redirect("patients:detail", patient_id=patient.pk)
+
+
+@doctor_required
+def patient_delete(request, patient_id):
+    if request.method != "POST":
+        return redirect("patients:detail", patient_id=patient_id)
+    patient = get_object_or_404(Patient, pk=patient_id)
+    name = str(patient)
+    patient.delete()
+    messages.success(
+        request,
+        f"Le dossier de {name} et ses consultations ont été supprimés.",
+    )
+    return redirect("patients:list")

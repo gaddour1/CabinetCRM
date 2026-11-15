@@ -3,17 +3,13 @@
 {% block content %}
 <header class="page-header">
   <div><a class="back-link" href="{% url 'consultations:list' %}">← Retour aux consultations</a><p class="eyebrow">CONSULTATION DU {{ consultation.consultation_date|date:"d/m/Y" }}</p><h1>{{ consultation.reference }}</h1><p class="muted"><a class="text-link" href="{% url 'patients:detail' consultation.patient_id %}">{{ consultation.patient.first_name }} {{ consultation.patient.last_name }}</a> · {{ consultation.doctor.get_full_name|default:consultation.doctor.username }}</p></div>
-  <div class="header-actions"><a class="button secondary" href="{% url 'documents:consultation_report' consultation.pk %}">Imprimer le compte rendu</a><a class="button secondary" href="{% url 'consultations:update' consultation.pk %}">Modifier la consultation</a><a class="button secondary" href="{% url 'billing:invoice_detail' consultation.invoice_id %}">Ouvrir la facture</a></div>
+  <div class="header-actions"><a class="button secondary" href="{% url 'documents:consultation_report' consultation.pk %}">Imprimer le compte rendu</a><a class="button secondary" href="{% url 'consultations:update' consultation.pk %}">Modifier la consultation</a><form method="post" action="{% url 'consultations:delete' consultation.pk %}" onsubmit="return confirm('Supprimer définitivement cette consultation ?');">{% csrf_token %}<button class="button danger-outline" type="submit">Supprimer la consultation</button></form></div>
 </header>
 <section class="panel consultation-summary">
   <div class="panel-heading"><h2>Résumé de la consultation</h2></div>
   <dl class="detail-list">
     <div><dt>Motif</dt><dd>{{ consultation.reason|linebreaksbr }}</dd></div>
-    <div><dt>Statut du paiement</dt><dd><span class="badge status-payment-{{ consultation.payment_status|lower }}">{{ consultation.payment_status_display }}</span></dd></div>
-    <div><dt>Prix de la consultation</dt><dd>{{ consultation.consultation_fee|floatformat:3 }} TND</dd></div>
-    <div><dt>Total payé</dt><dd>{{ consultation.amount_paid|floatformat:3 }} TND</dd></div>
-    <div><dt>Reste à payer</dt><dd>{{ consultation.remaining_amount|floatformat:3 }} TND</dd></div>
-    <div><dt>Mode(s) de paiement</dt><dd>{% if consultation.payment_methods %}{{ consultation.payment_methods|join:", " }}{% else %}Aucun paiement enregistré{% endif %}</dd></div>
+    <div><dt>Prix de la consultation</dt><dd>{% if consultation.consultation_fee != None %}{{ consultation.consultation_fee|floatformat:3 }} TND{% else %}Non renseigné{% endif %}</dd></div>
     <div><dt>Statut de l’assurance</dt><dd><span class="badge status-insurance-{{ consultation.insurance_status|lower }}">{{ consultation.insurance_status_display }}</span></dd></div>
   </dl>
 </section>
@@ -50,13 +46,5 @@
     <div class="wide"><dt>Commentaire</dt><dd>{{ consultation.insurance_comment|linebreaksbr|default:"Aucun commentaire" }}</dd></div>
     {% else %}<div><dt>Statut</dt><dd>Le patient a déclaré ne pas être assuré.</dd></div>{% endif %}
   </dl>
-</section>
-<section class="panel consultation-payments">
-  <div class="panel-heading"><div><h2>Historique des règlements</h2><p class="muted">Transactions associées à la facture {{ consultation.invoice.number }}.</p></div></div>
-  {% if consultation.invoice.payments.all %}
-  <div class="table-wrap"><table><thead><tr><th>Date et heure</th><th>Montant</th><th>Moyen</th><th>Référence</th></tr></thead><tbody>
-    {% for payment in consultation.invoice.payments.all %}<tr><td>{{ payment.paid_at|date:"d/m/Y H:i" }}</td><td>{{ payment.amount|floatformat:3 }} TND</td><td>{{ payment.get_method_display }}</td><td>{{ payment.reference|default:"—" }}</td></tr>{% endfor %}
-  </tbody></table></div>
-  {% else %}<div class="empty-state"><p>Aucun paiement enregistré pour cette consultation.</p><a class="button primary" href="{% url 'billing:invoice_detail' consultation.invoice_id %}">Enregistrer un paiement</a></div>{% endif %}
 </section>
 {% endblock %}

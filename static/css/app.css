@@ -46,6 +46,12 @@ h3 { color: var(--navy); }
 .button.secondary { color: #43576a; border-color: #dce4eb; background: white; }
 .button.secondary:hover { border-color: #aabac7; }
 .button.danger-outline { color: var(--red); border-color: #ebcaca; background: white; }
+.inline-form { display: inline-flex; margin: 0; }
+.icon-button { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; margin: 0 2px; padding: 7px; border: 1px solid #dce4eb; border-radius: 7px; color: #43576a; background: #fff; vertical-align: middle; cursor: pointer; }
+.icon-button:hover { color: var(--blue-dark); border-color: #aabac7; }
+.icon-button.danger { color: var(--red); }
+.icon-button.danger:hover { border-color: #ebcaca; background: #fff8f8; }
+.icon-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .full-width { width: 100%; margin-top: 13px; }
 .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; margin-bottom: 25px; }
 .stat-card, .panel { border: 1px solid var(--line); border-radius: 11px; background: var(--surface); box-shadow: 0 2px 6px #19344b08; }

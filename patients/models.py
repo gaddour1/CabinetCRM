@@ -52,6 +52,20 @@ class Patient(models.Model):
     def is_archived(self):
         return self.archived_at is not None
 
+    @property
+    def age(self):
+        if self.date_of_birth is None:
+            return None
+        today = timezone.localdate()
+        return (
+            today.year
+            - self.date_of_birth.year
+            - (
+                (today.month, today.day)
+                < (self.date_of_birth.month, self.date_of_birth.day)
+            )
+        )
+
     def archive(self):
         if self.archived_at is None:
             self.archived_at = timezone.now()

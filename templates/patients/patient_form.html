@@ -12,6 +12,7 @@
     {% for field in form %}{% if field.name == "first_name" or field.name == "last_name" or field.name == "date_of_birth" or field.name == "sex" or field.name == "cin" or field.name == "phone" or field.name == "address" or field.name == "profession" or field.name == "blood_group" %}
     <div class="field {% if field.name == 'address' %}wide{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required">*</span>{% endif %}</label>{{ field }}{% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
     {% endif %}{% endfor %}
+    <div class="field"><label for="patient-age">Âge</label><input id="patient-age" type="number" value="{{ patient.age }}" readonly aria-live="polite" placeholder="Calculé automatiquement"><small class="muted small">Calculé à partir de la date de naissance.</small></div>
   </div></section>
   <section class="form-section"><h2>Informations médicales</h2><p class="muted small">Ces informations sont confidentielles et réservées à la prise en charge médicale.</p><div class="form-grid">
     {% for field in form %}{% if field.name == "medical_history" or field.name == "allergies" or field.name == "usual_treatments" %}
@@ -21,3 +22,4 @@
   <div class="form-actions"><a class="button secondary" href="{% if patient %}{% url 'patients:detail' patient.pk %}{% else %}{% url 'patients:list' %}{% endif %}">Annuler</a><button class="button primary" type="submit">Enregistrer le dossier</button></div>
 </form>
 {% endblock %}
+{% block page_scripts %}<script src="/static/js/patient-age.js" defer></script>{% endblock %}

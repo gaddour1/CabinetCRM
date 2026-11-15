@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
+from consultations.models import Consultation
 from .forms import PatientForm
 from .models import Patient
 
@@ -35,6 +36,22 @@ class PatientFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["blood_group"], "O+")
 
+    def test_age_is_calculated_from_birth_date_and_updates_with_today(self):
+        today = timezone.localdate()
+        patient = Patient.objects.create(
+            first_name="Patient",
+            last_name="Fictif",
+            date_of_birth=date(today.year - 20, today.month, today.day),
+        )
+
+        self.assertEqual(patient.age, 20)
+        patient.date_of_birth = date(today.year - 21, today.month, today.day)
+        self.assertEqual(patient.age, 21)
+
+    def test_age_is_empty_without_birth_date(self):
+        patient = Patient(first_name="Patient", last_name="Fictif")
+        self.assertIsNone(patient.age)
+
 
 class PatientWorkflowTests(TestCase):
     def setUp(self):
@@ -44,6 +61,14 @@ class PatientWorkflowTests(TestCase):
             role=User.Role.DOCTOR,
         )
         self.client.force_login(self.doctor)
+
+    def test_patient_form_shows_the_read_only_age_field(self):
+        response = self.client.get(reverse("patients:create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="patient-age"')
+        self.assertContains(response, "readonly")
+        self.assertContains(response, "patient-age.js")
 
     def test_create_patient_and_search_by_name_phone_or_cin(self):
         response = self.client.post(
@@ -122,3 +147,31 @@ class PatientWorkflowTests(TestCase):
             self.client.get(reverse("patients:list"), {"archives": "1"}),
             "Archive Test",
         )
+
+    def test_patient_delete_requires_post_and_deletes_linked_consultations(self):
+        patient = Patient.objects.create(first_name="Nour", last_name="Test")
+        consultation = Consultation.objects.create(
+            patient=patient,
+            doctor=self.doctor,
+            reason="Motif fictif",
+        )
+        delete_url = reverse("patients:delete", args=[patient.pk])
+
+        response = self.client.get(delete_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Patient.objects.filter(pk=patient.pk).exists())
+        self.assertTrue(Consultation.objects.filter(pk=consultation.pk).exists())
+
+        response = self.client.post(delete_url)
+        self.assertRedirects(response, reverse("patients:list"))
+        self.assertFalse(Patient.objects.filter(pk=patient.pk).exists())
+        self.assertFalse(Consultation.objects.filter(pk=consultation.pk).exists())
+
+    def test_patient_table_contains_edit_and_confirmed_delete_actions(self):
+        patient = Patient.objects.create(first_name="Nour", last_name="Test")
+
+        response = self.client.get(reverse("patients:list"))
+
+        self.assertContains(response, reverse("patients:update", args=[patient.pk]))
+        self.assertContains(response, reverse("patients:delete", args=[patient.pk]))
+        self.assertContains(response, "Supprimer définitivement le dossier")

@@ -2,7 +2,7 @@
 {% block title %}Consultations{% endblock %}
 {% block content %}
 <header class="page-header">
-  <div><p class="eyebrow">SUIVI DU CABINET</p><h1>Consultations</h1><p class="muted">Historique des consultations et statuts administratifs.</p></div>
+  <div><p class="eyebrow">SUIVI DU CABINET</p><h1>Consultations</h1><p class="muted">Historique des consultations et informations d’assurance.</p></div>
   <a class="button primary" href="{% url 'consultations:create' %}">+ Nouvelle consultation</a>
 </header>
 <section class="panel">
@@ -28,7 +28,7 @@
     <span class="live-list-status badge rounded-pill text-bg-light" aria-live="polite">{{ consultations|length }} résultat{{ consultations|length|pluralize:"s" }}</span>
   </form>
   <div class="list-results" data-live-results data-empty-message="Aucune consultation ne correspond à cette recherche." data-empty-title="Aucune consultation">
-    <div class="table-wrap table-responsive rounded-3 border" {% if not consultations %}hidden{% endif %}><table class="table table-hover table-striped align-middle mb-0"><thead class="table-light"><tr><th scope="col">Référence</th><th scope="col">Date</th><th scope="col">Motif</th><th scope="col">Paiement</th><th scope="col">Assurance</th><th scope="col">Action</th></tr></thead><tbody data-live-rows>
+    <div class="table-wrap table-responsive rounded-3 border" {% if not consultations %}hidden{% endif %}><table class="table table-hover table-striped align-middle mb-0"><thead class="table-light"><tr><th scope="col">Référence</th><th scope="col">Date</th><th scope="col">Motif</th><th scope="col">Prix</th><th scope="col">Assurance</th><th scope="col">Actions</th></tr></thead><tbody data-live-rows>
       {% include "consultations/partials/consultation_rows.html" %}
     </tbody></table></div>
     <div class="empty-state" data-live-empty {% if consultations %}hidden{% endif %}><span>◷</span><h3>Aucune consultation</h3><p>{% if query %}Aucune consultation ne correspond à cette recherche.{% else %}Créez une consultation pour commencer votre historique.{% endif %}</p>{% if not query %}<a class="button primary" href="{% url 'consultations:create' %}">Créer une consultation</a>{% endif %}</div>

@@ -2,7 +2,7 @@
 {% block title %}{% if is_edit %}Modifier la consultation{% else %}Nouvelle consultation{% endif %}{% endblock %}
 {% block content %}
 <header class="page-header">
-  <div><p class="eyebrow">SUIVI DU CABINET</p><h1>{% if is_edit %}Modifier la consultation{% else %}Nouvelle consultation{% endif %}</h1><p class="muted">{% if is_edit %}Modifiez les informations de cette consultation. Les paiements déjà enregistrés sont conservés.{% else %}Une facture de consultation sera créée automatiquement; les paiements seront enregistrés séparément.{% endif %}</p></div>
+  <div><p class="eyebrow">SUIVI DU CABINET</p><h1>{% if is_edit %}Modifier la consultation{% else %}Nouvelle consultation{% endif %}</h1><p class="muted">{% if is_edit %}Modifiez les informations de cette consultation.{% else %}Le prix de la consultation est facultatif.{% endif %}</p></div>
   <div class="header-actions"><a class="button secondary" href="{% url 'consultations:suggestions' %}">Gérer les suggestions</a><a class="button secondary" href="{% if consultation %}{% url 'consultations:detail' consultation.pk %}{% else %}{% url 'consultations:list' %}{% endif %}">Annuler</a></div>
 </header>
 <form method="post" class="panel patient-form consultation-form" data-suggestions-url="{% url 'consultations:suggestions_api' %}" data-use-url-pattern="{% url 'consultations:suggestions_use' suggestion_id=0 %}">
@@ -20,7 +20,7 @@
     {% endif %}
     {% endfor %}
   </div></section>
-  <section class="form-section"><h2>Examen clinique</h2><p class="muted small">À remplir par le médecin avant les informations d’assurance et de facturation.</p><div class="form-grid">
+  <section class="form-section"><h2>Examen clinique</h2><p class="muted small">À remplir par le médecin avant les informations d’assurance.</p><div class="form-grid">
     {% for field in form %}
     {% if field.name == "blood_pressure" or field.name == "temperature" or field.name == "gad" or field.name == "spo2" or field.name == "heart_rate" or field.name == "clinical_other" %}
     <div class="field {% if field.name == 'clinical_other' %}wide{% endif %}">
@@ -43,7 +43,7 @@
     {% endif %}
     {% endfor %}
   </div></section>
-  <section class="form-section"><h2>Informations d’assurance</h2><p class="muted small">Le statut d’assurance est indépendant du paiement. Il n’est jamais déduit d’une déclaration seule.</p><div class="form-grid">
+  <section class="form-section"><h2>Informations d’assurance</h2><p class="muted small">Le statut d’assurance n’est jamais déduit d’une déclaration seule.</p><div class="form-grid">
     {% for field in form %}
     {% if field.name == "has_insurance" or field.name == "insurance_file_filled" or field.name == "insurance_type" or field.name == "insurer" or field.name == "affiliation_number" or field.name == "insurance_comment" %}
     <div class="field {% if field.name == 'insurance_comment' %}wide{% endif %} {% if field.field.widget.input_type == 'checkbox' or field.name == 'has_insurance' or field.name == 'insurance_file_filled' %}choice-field{% endif %}">
@@ -57,10 +57,11 @@
   <section class="form-section"><h2>Confirmation du dossier</h2><p class="muted small">Pour afficher « Remplie », le patient doit être assuré, le dossier déclaré rempli, les informations administratives complètes et vous devez confirmer leur vérification.</p>
     <div class="field choice-field verification-field"><label for="{{ form.insurance_verified.id_for_label }}">{{ form.insurance_verified.label }}</label>{{ form.insurance_verified }}{% for error in form.insurance_verified.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
   </section>
-  <section class="form-section"><h2>Facturation</h2>{% if is_edit %}<p class="muted small">Le nouveau prix ne peut pas être inférieur au total des paiements déjà reçus.</p>{% endif %}<div class="form-grid">
+  <section class="form-section"><h2>Prix de consultation (facultatif)</h2><div class="form-grid">
     {% with field=form.consultation_fee %}
     <div class="field">
-      <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required">*</span>{% endif %}</label>
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      <small class="muted small">Vous pouvez laisser ce champ vide.</small>
       {{ field }}
       {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
     </div>

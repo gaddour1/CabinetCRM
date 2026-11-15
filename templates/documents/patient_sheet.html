@@ -10,6 +10,7 @@
   <h2>Identité et coordonnées</h2>
   <dl class="info-grid">
     <div class="info-item"><dt>Date de naissance</dt><dd>{{ patient.date_of_birth|date:"d/m/Y"|document_value }}</dd></div>
+    <div class="info-item"><dt>Âge</dt><dd>{% if patient.age != None %}{{ patient.age }} ans{% else %}Non renseigné{% endif %}</dd></div>
     <div class="info-item"><dt>Sexe</dt><dd>{{ patient.get_sex_display|document_value }}</dd></div>
     <div class="info-item"><dt>CIN</dt><dd>{{ patient.cin|document_value }}</dd></div>
     <div class="info-item"><dt>Téléphone</dt><dd>{{ patient.phone|document_value }}</dd></div>
@@ -59,28 +60,13 @@
       <div class="info-item"><dt>Vérifié par</dt><dd>{% if consultation.insurance_verified_by %}{{ consultation.insurance_verified_by.get_full_name|default:consultation.insurance_verified_by.username }}{% else %}<span class="missing">Non renseigné</span>{% endif %}</dd></div>
       <div class="info-item"><dt>Vérifié le</dt><dd>{{ consultation.insurance_verified_at|date:"d/m/Y H:i"|document_value }}</dd></div>
       {% endif %}
-      <div class="info-item"><dt>Facture</dt><dd>{{ consultation.invoice.number }} · {{ consultation.invoice.consultation_fee|floatformat:3 }} TND · payé {{ consultation.invoice.amount_paid|floatformat:3 }} TND · solde {{ consultation.invoice.remaining_amount|floatformat:3 }} TND · {{ consultation.invoice.financial_status_display }}</dd></div>
+      <div class="info-item"><dt>Prix de consultation</dt><dd>{% if consultation.consultation_fee != None %}{{ consultation.consultation_fee|floatformat:3 }} TND{% else %}<span class="missing">Non renseigné</span>{% endif %}</dd></div>
     </dl>
   </article>
   {% endfor %}
   {% else %}<p class="empty-note">Aucune consultation enregistrée.</p>{% endif %}
 </section>
 
-<section>
-  <h2>Facturation et paiements</h2>
-  {% if invoices %}
-  {% for invoice in invoices %}
-  <h3>{{ invoice.number }} · {{ invoice.consultation_date|date:"d/m/Y" }}</h3>
-  <p>Montant : {{ invoice.consultation_fee|floatformat:3 }} TND · Payé : {{ invoice.amount_paid|floatformat:3 }} TND · Solde : {{ invoice.remaining_amount|floatformat:3 }} TND · Statut : {{ invoice.financial_status_display }}</p>
-  {% if invoice.payments.all %}
-  <table class="data-table">
-    <thead><tr><th>Date</th><th>Montant</th><th>Moyen</th><th>Référence</th></tr></thead>
-    <tbody>{% for payment in invoice.payments.all %}<tr><td>{{ payment.paid_at|date:"d/m/Y H:i" }}</td><td>{{ payment.amount|floatformat:3 }} TND</td><td>{{ payment.get_method_display }}</td><td>{{ payment.reference|document_value }}</td></tr>{% endfor %}</tbody>
-  </table>
-  {% else %}<p class="empty-note">Aucun paiement enregistré.</p>{% endif %}
-  {% endfor %}
-  {% else %}<p class="empty-note">Aucune facture enregistrée.</p>{% endif %}
-</section>
 <section class="signature-area">
   <div class="signature-box">
     <p>{{ cabinet_info.doctor }}</p>

@@ -30,7 +30,7 @@
     <span class="live-list-status badge rounded-pill text-bg-light" aria-live="polite">{{ patients|length }} résultat{{ patients|length|pluralize:"s" }}</span>
   </form>
   <div class="list-results" data-live-results data-empty-message="Aucun patient ne correspond à cette recherche." data-empty-title="Aucun patient">
-    <div class="table-wrap table-responsive rounded-3 border" {% if not patients %}hidden{% endif %}><table class="table table-hover table-striped align-middle mb-0"><thead class="table-light"><tr><th scope="col">Patient</th><th scope="col">N° dossier</th><th scope="col">Date de naissance</th><th scope="col">Téléphone</th><th scope="col" class="text-end">Action</th></tr></thead><tbody data-live-rows>
+    <div class="table-wrap table-responsive rounded-3 border" {% if not patients %}hidden{% endif %}><table class="table table-hover table-striped align-middle mb-0"><thead class="table-light"><tr><th scope="col">Patient</th><th scope="col">N° dossier</th><th scope="col">Date de naissance</th><th scope="col">Téléphone</th><th scope="col" class="text-end">Actions</th></tr></thead><tbody data-live-rows>
       {% include "patients/partials/patient_rows.html" %}
     </tbody></table></div>
     <div class="empty-state" data-live-empty {% if patients %}hidden{% endif %}><span>⌕</span><h3>Aucun résultat</h3><p>{% if query %}Essayez avec un autre nom, CIN ou numéro de téléphone.{% else %}Aucun dossier dans cette liste.{% endif %}</p>{% if not show_archived %}<a class="button primary" href="{% url 'patients:create' %}">Créer un patient</a>{% endif %}</div>

@@ -1,11 +1,8 @@
-from decimal import Decimal
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from django.conf import settings
 from django.contrib.staticfiles import finders
-from django.db.models import DecimalField, Prefetch, Sum, Value
-from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
@@ -13,21 +10,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 
 from accounts.decorators import doctor_required
-from billing.models import Invoice, Payment
 from consultations.models import Consultation
 from patients.models import Patient
-
-
-def _invoice_queryset():
-    return Invoice.objects.select_related("patient").annotate(
-        paid_total=Coalesce(
-            Sum("payments__amount"),
-            Value(
-                Decimal("0.000"),
-                output_field=DecimalField(max_digits=10, decimal_places=3),
-            ),
-        )
-    )
 
 
 def _static_url_fetcher(url):
@@ -75,12 +59,7 @@ def patient_sheet(request, patient_id):
     consultations = (
         Consultation.objects.filter(patient=patient)
         .select_related("doctor")
-        .prefetch_related(
-            Prefetch("invoice", queryset=_invoice_queryset())
-        )
-    )
-    invoices = _invoice_queryset().filter(patient=patient).prefetch_related(
-        "payments__created_by"
+        .select_related("insurance_verified_by")
     )
     document_number = f"FP-{timezone.localdate().year}-{patient.pk:05d}"
     return _document_response(
@@ -89,7 +68,6 @@ def patient_sheet(request, patient_id):
         {
             "patient": patient,
             "consultations": consultations,
-            "invoices": invoices,
             "document_number": document_number,
             "generated_at": timezone.localtime(),
         },
@@ -101,7 +79,7 @@ def patient_sheet(request, patient_id):
 @require_GET
 def consultation_report(request, consultation_id):
     consultation = get_object_or_404(
-        Consultation.objects.select_related("patient", "doctor", "invoice"),
+        Consultation.objects.select_related("patient", "doctor"),
         pk=consultation_id,
     )
     document_number = f"CR-{timezone.localdate().year}-{consultation.pk:05d}"
@@ -114,50 +92,4 @@ def consultation_report(request, consultation_id):
             "generated_at": timezone.localtime(),
         },
         f"compte-rendu-{consultation.reference}.pdf",
-    )
-
-
-@doctor_required
-@require_GET
-def invoice_document(request, invoice_id):
-    invoice = get_object_or_404(_invoice_queryset(), pk=invoice_id)
-    consultation = (
-        Consultation.objects.filter(invoice=invoice)
-        .select_related("doctor")
-        .first()
-    )
-    document_number = f"FAC-{timezone.localdate().year}-{invoice.pk:05d}"
-    return _document_response(
-        request,
-        "documents/invoice.html",
-        {
-            "invoice": invoice,
-            "consultation": consultation,
-            "payments": invoice.payments.select_related("created_by").all(),
-            "document_number": document_number,
-            "generated_at": timezone.localtime(),
-        },
-        f"facture-{invoice.number}.pdf",
-    )
-
-
-@doctor_required
-@require_GET
-def payment_receipt(request, payment_id):
-    payment = get_object_or_404(
-        Payment.objects.select_related("invoice__patient", "created_by"),
-        pk=payment_id,
-    )
-    invoice = _invoice_queryset().get(pk=payment.invoice_id)
-    document_number = f"REC-{timezone.localdate().year}-{payment.pk:05d}"
-    return _document_response(
-        request,
-        "documents/payment_receipt.html",
-        {
-            "payment": payment,
-            "invoice": invoice,
-            "document_number": document_number,
-            "generated_at": timezone.localtime(),
-        },
-        f"recu-{document_number}.pdf",
     )

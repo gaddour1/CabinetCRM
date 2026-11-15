@@ -33,6 +33,7 @@ class ConsultationForm(forms.ModelForm):
         max_digits=10,
         decimal_places=3,
         min_value=0.001,
+        required=False,
     )
     has_insurance = forms.TypedChoiceField(
         label="Le patient possède-t-il une assurance ?",
@@ -156,7 +157,7 @@ class ConsultationForm(forms.ModelForm):
         )
         if self.instance.pk:
             self.fields["patient"].disabled = True
-            self.fields["consultation_fee"].initial = self.instance.invoice.consultation_fee
+            self.fields["consultation_fee"].initial = self.instance.consultation_fee
             self.initial["has_insurance"] = (
                 "true" if self.instance.has_insurance else "false"
             )

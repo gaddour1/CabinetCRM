@@ -1,14 +1,11 @@
 import uuid
 import unicodedata
-from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Sum
 from django.utils import timezone
 
-from billing.models import Invoice, Payment
 from patients.models import Patient
 
 
@@ -17,11 +14,6 @@ def generate_consultation_reference():
 
 
 class Consultation(models.Model):
-    class PaymentStatus(models.TextChoices):
-        UNPAID = "UNPAID", "Non payé"
-        PARTIAL = "PARTIAL", "Partiellement payé"
-        PAID = "PAID", "Payé"
-
     class InsuranceStatus(models.TextChoices):
         COMPLETED = "COMPLETED", "Remplie"
         INCOMPLETE = "INCOMPLETE", "Non remplie"
@@ -47,7 +39,7 @@ class Consultation(models.Model):
     )
     patient = models.ForeignKey(
         Patient,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="consultations",
         verbose_name="patient",
     )
@@ -57,11 +49,12 @@ class Consultation(models.Model):
         related_name="consultations",
         verbose_name="médecin",
     )
-    invoice = models.OneToOneField(
-        Invoice,
-        on_delete=models.PROTECT,
-        related_name="consultation",
-        verbose_name="facture",
+    consultation_fee = models.DecimalField(
+        "prix de la consultation (TND)",
+        max_digits=10,
+        decimal_places=3,
+        blank=True,
+        null=True,
     )
     consultation_date = models.DateField(
         "date de consultation",
@@ -132,43 +125,6 @@ class Consultation(models.Model):
     def __str__(self):
         return f"{self.reference} — {self.patient}"
 
-    def clean(self):
-        super().clean()
-        if self.invoice_id and self.patient_id:
-            if self.invoice.patient_id != self.patient_id:
-                raise ValidationError(
-                    {"invoice": "La facture doit appartenir au patient de la consultation."}
-                )
-
-    @property
-    def consultation_fee(self):
-        return self.invoice.consultation_fee
-
-    @property
-    def amount_paid(self):
-        annotated_total = getattr(self, "paid_total", None)
-        if annotated_total is not None:
-            return annotated_total
-        return self.invoice.payments.aggregate(total=Sum("amount"))["total"] or Decimal(
-            "0.000"
-        )
-
-    @property
-    def remaining_amount(self):
-        return self.consultation_fee - self.amount_paid
-
-    @property
-    def payment_status(self):
-        if self.remaining_amount <= 0:
-            return self.PaymentStatus.PAID
-        if self.amount_paid > 0:
-            return self.PaymentStatus.PARTIAL
-        return self.PaymentStatus.UNPAID
-
-    @property
-    def payment_status_display(self):
-        return self.PaymentStatus(self.payment_status).label
-
     @property
     def insurance_status(self):
         if not self.has_insurance:
@@ -188,15 +144,6 @@ class Consultation(models.Model):
     def insurance_status_display(self):
         return self.InsuranceStatus(self.insurance_status).label
 
-    @property
-    def payment_methods(self):
-        methods = dict(Payment.Method.choices)
-        return [
-            methods[method]
-            for method in self.invoice.payments.order_by()
-            .values_list("method", flat=True)
-            .distinct()
-        ]
 
 
 def normalize_suggestion_text(value):

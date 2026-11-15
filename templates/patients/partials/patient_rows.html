@@ -4,7 +4,7 @@
   <td><code>{{ patient.record_number }}</code></td>
   <td class="text-nowrap">{{ patient.date_of_birth|date:"d/m/Y"|default:"—" }}</td>
   <td class="text-nowrap">{{ patient.phone|default:"—" }}</td>
-  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'patients:detail' patient.pk %}">Consulter <span aria-hidden="true">→</span></a></td>
+  <td class="text-end text-nowrap"><a class="icon-button" href="{% url 'patients:update' patient.pk %}" aria-label="Modifier le dossier de {{ patient.first_name }} {{ patient.last_name }}" title="Modifier"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></a><form class="inline-form" method="post" action="{% url 'patients:delete' patient.pk %}" onsubmit="return confirm('Supprimer définitivement le dossier de {{ patient.first_name|escapejs }} {{ patient.last_name|escapejs }} et toutes ses consultations ?');">{% csrf_token %}<button class="icon-button danger" type="submit" aria-label="Supprimer le dossier de {{ patient.first_name }} {{ patient.last_name }}" title="Supprimer"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg></button></form><a class="icon-button" href="{% url 'patients:detail' patient.pk %}" aria-label="Consulter le dossier de {{ patient.first_name }} {{ patient.last_name }}" title="Consulter"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></a></td>
 </tr>
 {% empty %}
 {% endfor %}

@@ -11,4 +11,5 @@ urlpatterns = [
     path("<int:patient_id>/modifier/", views.patient_update, name="update"),
     path("<int:patient_id>/archiver/", views.patient_archive, name="archive"),
     path("<int:patient_id>/restaurer/", views.patient_restore, name="restore"),
+    path("<int:patient_id>/supprimer/", views.patient_delete, name="delete"),
 ]
